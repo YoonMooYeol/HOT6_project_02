@@ -3,24 +3,33 @@
       <button class="heart-button" @click="toggleLike">
         {{ isLiked ? "♥︎" : "♡" }}
       </button>
-      <input v-model="newMessage" @keyup.enter="handleSend" placeholder="메시지 입력" />
-      <button class="send-button" @click="handleSend">➢</button>
+      <input 
+      v-model="newMessage" 
+      :disabled="!selectedMessage" 
+      placeholder="메시지 입력" 
+      />
+      <button class="send-button" @click="handleSend" :disabled="!selectedMessage || !newMessage.trim()">
+      ➢
+      </button>
     </div>
   </template>
   
   <script setup>
-  import { ref } from "vue";
+  import { ref, defineProps, defineEmits } from "vue";
   
-  const newMessage = ref("");
   const emit = defineEmits(["sendMessage", "toggleLike"]);
-  defineProps({ isLiked: Boolean });
+  
+  const props = defineProps({ isLiked: Boolean, selectedMessage: String,
+  });
+
+  const newMessage = ref("");
   
   const handleSend = () => {
-    if (newMessage.value.trim() !== "") {
-      emit("sendMessage", newMessage.value);
-      newMessage.value = "";
-    }
+    if (!newMessage.value.trim()) return; 
+    emit("sendMessage", newMessage.value); 
+    newMessage.value = ""; 
   };
+
   const toggleLike = () => {
     emit("toggleLike");
   };
@@ -32,8 +41,9 @@
     align-items: center;
     padding: 12px;
     background-color: #FFFFFF;
-    width: 95%;
-    max-width: 390px;
+    width: 100%;
+    max-width: 370px;
+    border-radius: 0px;
   }
   
   .heart-button {
@@ -70,7 +80,8 @@
   }
   
   .send-button:hover {
-    background-color: #979595 ;
+    background-color: #979595;
+    cursor: not-allowed;
   }
   </style>
   
