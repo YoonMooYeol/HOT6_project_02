@@ -1,25 +1,27 @@
 <template>
   <div class="app">
-    <div class="chat-container" :class="{ liked: isLiked }">
-
+    <div class="chat-container" :class="{ warm: isWarmMode }">
       <navBar />
       <div class="chat-content">
-        <p v-if="messages.length === 0" class="empty-message"></p>
+        <p v-if="messages.length === 0" class="empty-message">메시지가 없습니다.</p>
         <div
-          v-for="(message, index) in messages"
+          v-for="(message, index) in sortedMessages"
           :key="index"
-          :class="['chat-bubble', message.isMine ? 'mine' : 'other']"
+          :class="['message-container', message.isMine ? 'mine' : 'other']"
         >
-          <span class="message-text">{{ message.text }}</span>
+          <div class="chat-bubble">
+            <span class="message-text">{{ message.text }}</span>
+          </div>
         </div>
+      </div>
 
       <div v-if="isPopupVisible" class="popup">
         <div class="popup-content">
-          <button class="close-btn" @click="togglePopup">×</button>
-          <button class="refresh-btn" @click="refreshOptions">↺</button>
+          <button class="close-btn" @click="isPopupVisible = false">×</button>
           <div class="options">
             <button v-for="(option, index) in options" 
-                    :key="index" class="option-btn"
+                    :key="index" 
+                    class="option-btn"
                     @click="selectOption(option)">
               {{ option }}
             </button>
@@ -27,56 +29,103 @@
         </div>
       </div>
 
-      
-      </div>
-      <footBar @sendMessage="handleSendMessage" 
-               @toggleLike="toggleLike" 
-               :isLiked="isLiked" 
-               :selectedMessage="selectedMessage"
-      />
+      <footBar @updateWarmMode="updateWarmMode" />
     </div>
   </div>
-
 </template>
 
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import NavBar from "./components/NavBar.vue";
 import FootBar from "./components/FootBar.vue";
+import { useMessages } from "./store/message";
 
-const messages = ref([]);
+const { messages, getAllMessages } = useMessages();
 const isLiked = ref(false);
 const isPopupVisible = ref(false);
-const options = ref(["선택 1", "선택 2", "선택 3"]);
+const options = ref([]);
 const pendingMessage = ref("");
 const selectedMessage = ref("");
+const isWarmMode = ref(false);
 
-const handleSendMessage = (newMessage) => {
-  if (!selectedMessage.value) return; 
-  messages.value.push({ text: selectedMessage.value, isMine: true });
-  selectedMessage.value = ""; 
-  isPopupVisible.value = false;
+// 스크롤을 즉시 최하단으로 이동하는 함수
+const scrollToBottom = () => {
+  const chatContent = document.querySelector('.chat-content');
+  if (chatContent) {
+    chatContent.scrollTop = chatContent.scrollHeight;
+  }
 };
 
+// 메시지 변경을 감지하여 스크롤 이동
+watch(messages, () => {
+  scrollToBottom();
+}, { deep: true });  // deep watch로 변경
+
+// 메시지를 생성 시간순으로 정렬
+const sortedMessages = computed(() => {
+  return [...messages.value].sort((a, b) => {
+    return new Date(a.createdAt) - new Date(b.createdAt);
+  });
+});
+
+// 메시지 로드 함수
+const loadMessages = async () => {
+  try {
+    await getAllMessages();
+    scrollToBottom();  // 로드 후 즉시 스크롤
+  } catch (error) {
+    console.error('메시지 로드 실패:', error);
+  }
+};
+
+// 컴포넌트 마운트 시 메시지 로드
+onMounted(() => {
+  loadMessages();
+});
+
+// 새로고침 이벤트 리스너 추가
+window.addEventListener('focus', () => {
+  loadMessages();
+});
+
+const handleSendMessage = (messageData) => {
+  messages.value.push({ 
+    text: messageData.text, 
+    isMine: true 
+  });
+  scrollToBottom();  // 메시지 추가 후 즉시 스크롤
+};
+
+const showOptions = (newOptions) => {
+  options.value = newOptions;
+  isPopupVisible.value = true;
+};
 
 const selectOption = (option) => {
-  selectedMessage.value = option;
+  messages.value.push({ 
+    text: option, 
+    isMine: false 
+  });
+  isPopupVisible.value = false;
+  scrollToBottom();  // 옵션 선택 후 즉시 스크롤
 };
-
 
 const toggleLike = () => {
   isLiked.value = !isLiked.value;
 };
 
-
 const togglePopup = () => {
   isPopupVisible.value = false;
 };
 
-
 const refreshOptions = () => {
   options.value = ["새 선택 1", "새 선택 2", "새 선택 3"];
+};
+
+const updateWarmMode = (newState) => {
+  console.log('Warm mode updated:', newState);
+  isWarmMode.value = newState;
 };
 </script>
 
@@ -98,35 +147,48 @@ const refreshOptions = () => {
   border-radius: 15px;
   margin-right: 30px;
   overflow: hidden;
-  background-color: #EAEAEA;
+  background-color: #dddddd;
   transition: background-color 0.3s ease;
 }
 
-.chat-container.liked {
-  background-color:#FFE0E0 
+.chat-container.warm {
+  background-color: #FFE0E0;
 }
 
 .chat-content {
   flex-grow: 1;
   overflow-y: auto;
   padding: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.message-container {
+  display: flex;
+  width: 100%;
+  margin: 5px 0;
+}
+
+.message-container.mine {
+  justify-content: flex-end;
+}
+
+.message-container.other {
+  justify-content: flex-start;
 }
 
 .chat-bubble {
   max-width: 75%;
   padding: 10px;
-  margin: 5px;
   border-radius: 15px;
   background-color: white;
 }
 
-.mine {
-  align-self: flex-end;
+.mine .chat-bubble {
   background-color: #ffebf0;
 }
 
-.other {
-  align-self: flex-start;
+.other .chat-bubble {
   background-color: #fff;
 }
 
@@ -137,8 +199,8 @@ const refreshOptions = () => {
 }
 
 .popup {
-  position: absolute;
-  bottom: 70px;
+  position: fixed;
+  top: 80px;
   left: 50%;
   transform: translateX(-50%);
   width: 380px;
@@ -146,7 +208,7 @@ const refreshOptions = () => {
   padding: 15px;
   border-radius: 15px;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-  text-align: center;
+  z-index: 1000;
 }
 
 .popup-content {
@@ -159,16 +221,6 @@ const refreshOptions = () => {
   position: absolute;
   top: 10px;
   right: 15px;
-  border: none;
-  background: none;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-.refresh-btn {
-  position: absolute;
-  top: 10px;
-  left: 15px;
   border: none;
   background: none;
   font-size: 18px;

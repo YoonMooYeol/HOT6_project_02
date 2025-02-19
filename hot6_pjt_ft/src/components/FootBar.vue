@@ -1,39 +1,80 @@
 <template>
   <div class="foot-bar">
-    <button class="heart-button" @click="toggleLike">
-      {{ isLiked ? "♥︎" : "♡" }}
+    <button class="heart-button" 
+      @click="isLoading ? null : toggleLike">
+      {{ isLoading ? "..." : (isWarmMode ? "♥︎" : "♡") }}
     </button>
     <input 
       v-model="newMessage" 
-      :disabled="!selectedMessage" 
       placeholder="메시지 입력" 
     />
     <button class="send-button" 
-      @click="handleSend" 
-      :disabled="!selectedMessage || !newMessage.trim()">
-      ➢
+      @click="handleSend">
+      {{ isSending ? "..." : "➢" }}
     </button>
   </div>
 </template>
 
 <script setup>
 import { ref } from "vue";
+import { useMessages } from "../store/message";
 
-const emit = defineEmits(["sendMessage", "toggleLike"]);
-
-const props = defineProps({ isLiked: Boolean, selectedMessage: String,
-});
-
+const emit = defineEmits(['updateWarmMode']);
+const { messages, saveMessage } = useMessages();
 const newMessage = ref("");
+const isWarmMode = ref(false);
+const isLoading = ref(false);
+const isSending = ref(false);
 
-const handleSend = () => {
-  if (!newMessage.value.trim()) return; 
-  emit("sendMessage", newMessage.value); 
-  newMessage.value = ""; 
+const handleSend = async () => {
+  if (!newMessage.value.trim() || isSending.value) return;
+  
+  isSending.value = true;
+  try {
+    const data = await saveMessage(newMessage.value);
+    
+    // 사용자 메시지 추가
+    messages.value.push({
+      text: data.input_content,
+      isMine: true,
+      createdAt: new Date(data.created_at)
+    });
+
+    if (data.translated_content) {
+      const options = data.translated_content.split('\n').map(opt => opt.replace(/"/g, ''));
+      emit('showOptions', options);
+    }
+    newMessage.value = '';
+  } catch (error) {
+    console.error('Error sending message:', error);
+  } finally {
+    isSending.value = false;
+  }
 };
 
-const toggleLike = () => {
-  emit("toggleLike");
+const toggleLike = async () => {
+  if (isLoading.value) return;
+  
+  isLoading.value = true;
+  try {
+    const response = await fetch('http://127.0.0.1:8000/api/v1/chat/toggle-warm-mode/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      isWarmMode.value = data.warm_mode;
+      console.log('Emitting warm mode:', data.warm_mode);  // 디버깅용 로그
+      emit('updateWarmMode', data.warm_mode);  // 부모 컴포넌트에 상태 전달
+    }
+  } catch (error) {
+    console.error('Error toggling warm mode:', error);
+  } finally {
+    isLoading.value = false;
+  }
 };
 </script>
 
@@ -83,6 +124,10 @@ input {
 
 .send-button:hover {
   background-color: #979595;
+}
+
+input:disabled {
+  background-color: #f5f5f5;
   cursor: not-allowed;
 }
 </style>
