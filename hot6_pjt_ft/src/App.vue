@@ -42,8 +42,8 @@
 
 <script setup>
 import { ref } from "vue";
-import navBar from "./components/navBar.vue";
-import footBar from "./components/footBar.vue";
+import NavBar from "./components/NavBar.vue";
+import FootBar from "./components/FootBar.vue";
 
 const messages = ref([]);
 const isLiked = ref(false);
