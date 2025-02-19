@@ -9,8 +9,9 @@
           :key="index"
           :class="['message-container', message.isMine ? 'mine' : 'other']"
         >
-          <div class="chat-bubble" :class="{ 'original-message': message.isOriginal }">
-            <span class="message-text">{{ message.text }}</span>
+          <div class="chat-bubble">
+            <div v-if="message.input_content" class="input-content">{{ message.input_content }}</div>
+            <div class="output-content">{{ message.text }}</div>
           </div>
         </div>
       </div>
@@ -47,6 +48,7 @@ const { messages, getAllMessages } = useMessages();
 const isPopupVisible = ref(false);
 const options = ref([]);
 const isWarmMode = ref(false);
+const currentMessageId = ref(null);
 
 // 메시지를 생성 시간순으로 정렬
 const sortedMessages = computed(() => {
@@ -85,16 +87,20 @@ window.addEventListener('focus', () => {
   loadMessages();
 });
 
-const showOptions = (newOptions) => {
-  if (!isWarmMode.value) return;
+const showOptions = (newOptions, messageId) => {
   options.value = newOptions;
+  currentMessageId.value = messageId;
   isPopupVisible.value = true;
 };
 
 const selectOption = async (option, index) => {
   try {
-    // API 호출 - 가장 최근 메시지의 id 사용
-    const response = await fetch(`http://127.0.0.1:8000/api/v1/chat/select-translation/${messages.value[messages.value.length - 1].id}/`, {
+    console.log('선택된 옵션:', option);
+    console.log('선택된 인덱스:', index);
+    console.log('메시지 ID:', currentMessageId.value);
+
+    // API 호출
+    const response = await fetch(`http://127.0.0.1:8000/api/v1/chat/select-translation/${currentMessageId.value}/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -108,12 +114,16 @@ const selectOption = async (option, index) => {
       throw new Error('API 호출 실패');
     }
 
-    // 메시지 추가
+    const responseData = await response.json();
+    console.log('서버 응답:', responseData);
+
+    // output_content를 사용하여 메시지 추가
     messages.value.push({ 
-      text: option,
+      text: responseData.output_content,
+      input_content: responseData.input_content,  // 서버에서 받은 원본 메시지 사용
       isMine: true,
-      isOriginal: true,
-      createdAt: new Date()
+      isOriginal: false,
+      createdAt: new Date(responseData.created_at)
     });
     
     isPopupVisible.value = false;
@@ -250,11 +260,14 @@ const updateWarmMode = (newState) => {
   background: #ff1493;
 }
 
-.original-message {
-  font-size: 0.8em;
-  opacity: 0.7;
-  background-color: #f0f0f0 !important;
-  padding: 5px 10px;
-  margin-bottom: 2px;
+.input-content {
+  font-size: 0.85em;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.output-content {
+  font-size: 1em;
+  color: #000;
 }
 </style>

@@ -54,12 +54,13 @@ const handleSend = async () => {
     messages.value.push({
       text: data.input_content,
       isMine: true,
-      createdAt: new Date(data.created_at)
+      createdAt: new Date(data.created_at),
+      id: data.id
     });
 
     if (data.translated_content) {
       const options = data.translated_content.split('\n').map(opt => opt.replace(/"/g, ''));
-      emit('showOptions', options);
+      emit('showOptions', options, data.id);
     }
     newMessage.value = '';
   } catch (error) {

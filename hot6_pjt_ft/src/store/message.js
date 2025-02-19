@@ -69,11 +69,12 @@ export const useMessages = () => {
         }
 
         const data = await response.json();
-        // 받아온 메시지로 messages 업데이트
+        // id 포함하여 messages 업데이트
         messages.value = data.map(msg => ({
           text: msg.input_content,
           isMine: true,
-          createdAt: new Date(msg.created_at)
+          createdAt: new Date(msg.created_at),
+          id: msg.id  // id 추가
         }));
         
         return data;
