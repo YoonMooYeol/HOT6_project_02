@@ -1,7 +1,7 @@
 <template>
-  <div class="foot-bar">
+  <div class="foot-bar" :class="{ warm: isWarmMode }">
     <button class="heart-button" 
-      @click="isLoading ? null : toggleLike">
+      @click="toggleLike">
       {{ isLoading ? "..." : (isWarmMode ? "♥︎" : "♡") }}
     </button>
     <input 
@@ -16,15 +16,40 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useMessages } from "../store/message";
 
-const emit = defineEmits(['updateWarmMode']);
+const emit = defineEmits(['updateWarmMode', 'showOptions']);
 const { messages, saveMessage } = useMessages();
 const newMessage = ref("");
 const isWarmMode = ref(false);
 const isLoading = ref(false);
 const isSending = ref(false);
+
+// 초기 warm mode 상태 가져오기
+const getInitialWarmMode = async () => {
+  try {
+    const response = await fetch('http://127.0.0.1:8000/api/v1/chat/warm-mode/', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      isWarmMode.value = data.warm_mode;
+      emit('updateWarmMode', data.warm_mode);
+    }
+  } catch (error) {
+    console.error('Error getting warm mode:', error);
+  }
+};
+
+// 컴포넌트 마운트 시 초기 상태 가져오기
+onMounted(() => {
+  getInitialWarmMode();
+});
 
 const handleSend = async () => {
   if (!newMessage.value.trim() || isSending.value) return;
@@ -67,8 +92,7 @@ const toggleLike = async () => {
     if (response.ok) {
       const data = await response.json();
       isWarmMode.value = data.warm_mode;
-      console.log('Emitting warm mode:', data.warm_mode);  // 디버깅용 로그
-      emit('updateWarmMode', data.warm_mode);  // 부모 컴포넌트에 상태 전달
+      emit('updateWarmMode', data.warm_mode);
     }
   } catch (error) {
     console.error('Error toggling warm mode:', error);
@@ -129,5 +153,13 @@ input {
 input:disabled {
   background-color: #f5f5f5;
   cursor: not-allowed;
+}
+
+.foot-bar.warm {
+  background-color: #FFE0E0;
+}
+
+.heart-button.warm {
+  background-color: #ffebf0;
 }
 </style>
