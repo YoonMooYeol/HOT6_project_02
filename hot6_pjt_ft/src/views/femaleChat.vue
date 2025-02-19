@@ -22,7 +22,7 @@
             <button v-for="(option, index) in options" 
                     :key="index" 
                     class="option-btn"
-                    @click="selectOption(option)">
+                    @click="selectOption(option, index)">
               {{ option }}
             </button>
           </div>
@@ -86,28 +86,40 @@ window.addEventListener('focus', () => {
 });
 
 const showOptions = (newOptions) => {
+  if (!isWarmMode.value) return;
   options.value = newOptions;
   isPopupVisible.value = true;
 };
 
-const selectOption = (option) => {
-  messages.value.push({ 
-    text: option,
-    isMine: true,
-    isOriginal: true,
-    createdAt: new Date()
-  });
+const selectOption = async (option, index) => {
+  try {
+    // API 호출 - 가장 최근 메시지의 id 사용
+    const response = await fetch(`http://127.0.0.1:8000/api/v1/chat/select-translation/${messages.value[messages.value.length - 1].id}/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        selected_index: index
+      })
+    });
 
-  setTimeout(() => {
+    if (!response.ok) {
+      throw new Error('API 호출 실패');
+    }
+
+    // 메시지 추가
     messages.value.push({ 
-      text: "변환된 메시지가 여기에 들어갑니다",
+      text: option,
       isMine: true,
-      isOriginal: false,
+      isOriginal: true,
       createdAt: new Date()
     });
-  }, 1000);
-  
-  isPopupVisible.value = false;
+    
+    isPopupVisible.value = false;
+  } catch (error) {
+    console.error('옵션 선택 처리 실패:', error);
+  }
 };
 
 const updateWarmMode = (newState) => {

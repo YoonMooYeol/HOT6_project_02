@@ -6,6 +6,7 @@ const POLLING_INTERVAL = 500
 
 // API 엔드포인트 상수 정의
 const API_URL = 'http://127.0.0.1:8000/api/v1/chat/json-drf/'
+const isWarmMode = ref(false);  // 웜모드 상태를 저장할 ref 추가
 
 // 메시지 저장소
 const messages = ref([]);
@@ -82,13 +83,41 @@ export const useMessages = () => {
       }
     };
   
+    // 웜모드 상태 가져오기
+    const getWarmMode = async () => {
+      try {
+        // localStorage에서 웜모드 상태를 가져옴
+        const warmMode = localStorage.getItem('warm-mode');
+        isWarmMode.value = warmMode === 'true';
+        return isWarmMode.value;
+      } catch (error) {
+        console.error('Error getting warm mode:', error);
+        return false;
+      }
+    };
+  
+    // 웜모드 토글
+    const toggleWarmMode = async () => {
+      try {
+        isWarmMode.value = !isWarmMode.value;
+        // localStorage에 웜모드 상태 저장
+        localStorage.setItem('warm-mode', isWarmMode.value);
+        return isWarmMode.value;
+      } catch (error) {
+        console.error('Error toggling warm mode:', error);
+        throw error;
+      }
+    };
+  
     // 사용할 함수들을 객체로 반환
     return {
     //   getMessages,  // 메시지 목록 조회 함수
       messages,  // ref로 생성된 반응형 메시지 배열
       saveMessage,  // 새 메시지 저장 함수
       clearMessages,  // 메시지 삭제 함수
-      getAllMessages  // 새로운 함수 추가
+      getAllMessages,  // 새로운 함수 추가
+      getWarmMode,    // 웜모드 상태 가져오기 함수 추가
+      toggleWarmMode  // 웜모드 토글 함수 추가
     }
   }
   

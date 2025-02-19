@@ -6,6 +6,7 @@
     </button>
     <input 
       v-model="newMessage" 
+      @keyup.enter="handleSend"
       placeholder="메시지 입력" 
     />
     <button class="send-button" 
@@ -20,7 +21,7 @@ import { ref, onMounted } from "vue";
 import { useMessages } from "../store/message";
 
 const emit = defineEmits(['updateWarmMode', 'showOptions']);
-const { messages, saveMessage } = useMessages();
+const { messages, saveMessage, getWarmMode, toggleWarmMode } = useMessages();
 const newMessage = ref("");
 const isWarmMode = ref(false);
 const isLoading = ref(false);
@@ -29,18 +30,9 @@ const isSending = ref(false);
 // 초기 warm mode 상태 가져오기
 const getInitialWarmMode = async () => {
   try {
-    const response = await fetch('http://127.0.0.1:8000/api/v1/chat/warm-mode/', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      isWarmMode.value = data.warm_mode;
-      emit('updateWarmMode', data.warm_mode);
-    }
+    const warmMode = await getWarmMode();
+    isWarmMode.value = warmMode;
+    emit('updateWarmMode', warmMode);
   } catch (error) {
     console.error('Error getting warm mode:', error);
   }
@@ -82,18 +74,19 @@ const toggleLike = async () => {
   
   isLoading.value = true;
   try {
+    // 서버에 웜모드 상태 전송하고 응답 받기
     const response = await fetch('http://127.0.0.1:8000/api/v1/chat/toggle-warm-mode/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-      },
+        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+      }
     });
     
-    if (response.ok) {
-      const data = await response.json();
-      isWarmMode.value = data.warm_mode;
-      emit('updateWarmMode', data.warm_mode);
-    }
+    const data = await response.json();
+    isWarmMode.value = data.warm_mode; // 서버에서 받은 warm_mode 값으로 설정
+    emit('updateWarmMode', data.warm_mode);
+    
   } catch (error) {
     console.error('Error toggling warm mode:', error);
   } finally {
