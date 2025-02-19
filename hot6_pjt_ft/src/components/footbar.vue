@@ -4,18 +4,20 @@
         {{ isLiked ? "♥︎" : "♡" }}
       </button>
       <input 
-      v-model="newMessage" 
-      :disabled="!selectedMessage" 
-      placeholder="메시지 입력" 
+        v-model="newMessage" 
+        :disabled="!selectedMessage" 
+        placeholder="메시지 입력" 
       />
-      <button class="send-button" @click="handleSend" :disabled="!selectedMessage || !newMessage.trim()">
-      ➢
+      <button class="send-button" 
+        @click="handleSend" 
+        :disabled="!selectedMessage || !newMessage.trim()">
+        ➢
       </button>
     </div>
   </template>
   
   <script setup>
-  import { ref, defineProps, defineEmits } from "vue";
+  import { ref } from "vue";
   
   const emit = defineEmits(["sendMessage", "toggleLike"]);
   
