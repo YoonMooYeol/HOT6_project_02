@@ -10,7 +10,7 @@ const authState = reactive({
 export const useAuth = () => {
   // 회원가입 함수
   const register = async (userData) => {
-    const response = await fetch('http://127.0.0.1:8000/api/v1/accounts/signup/', {
+    const response = await fetch(`${AUTH_URL}/register/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

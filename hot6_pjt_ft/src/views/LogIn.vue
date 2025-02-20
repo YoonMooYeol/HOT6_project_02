@@ -56,7 +56,7 @@ const formData = ref({
 
 const handleLogin = async () => {
   try {
-    // 로그인 API 엔드포인트 수정
+    // 1. 로그인 요청
     const response = await fetch('http://127.0.0.1:8000/api/auth/token/', {
       method: 'POST',
       headers: {
@@ -73,34 +73,47 @@ const handleLogin = async () => {
     }
 
     const data = await response.json();
-    console.log('로그인 응답:', data);
+    console.log('토큰 응답:', data);
 
-    // 토큰 저장
+    // 2. 토큰 저장
+    const token = data.access;
     if (keepLoggedIn.value) {
-      localStorage.setItem('access_token', data.access);
+      localStorage.setItem('access_token', token);
       localStorage.setItem('refresh_token', data.refresh);
     } else {
-      sessionStorage.setItem('access_token', data.access);
+      sessionStorage.setItem('access_token', token);
       sessionStorage.setItem('refresh_token', data.refresh);
     }
 
-    // user_id 저장
-    const userResponse = await fetch('http://127.0.0.1:8000/api/v1/accounts/user/', {
+    // 3. 사용자 정보 가져오기 - 엔드포인트 수정
+    const userResponse = await fetch('http://127.0.0.1:8000/api/auth/user/', {
       headers: {
-        'Authorization': `Bearer ${data.access}`
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
       }
     });
     
-    if (userResponse.ok) {
-      const userData = await userResponse.json();
-      localStorage.setItem('user_id', userData.id.toString());
+    if (!userResponse.ok) {
+      throw new Error('사용자 정보 가져오기 실패');
     }
 
-    // 로그인 성공 시 채팅방으로 이동
-    router.push('/female-chat');  // 또는 '/male-chat'
+    const userData = await userResponse.json();
+    console.log('사용자 정보:', userData);
+
+    // 4. 사용자 정보 저장
+    localStorage.setItem('user_id', userData.id.toString());
+    localStorage.setItem('user_gender', userData.gender);
+
+    // 5. 성별에 따라 채팅방으로 이동
+    if (userData.gender === 'F') {
+      router.push('/female-chat');
+    } else {
+      router.push('/male-chat');
+    }
+
   } catch (error) {
     console.error('로그인 오류:', error);
-    alert('아이디 또는 비밀번호가 올바르지 않습니다.');
+    alert('로그인에 실패했습니다. 다시 시도해주세요.');
   }
 };
 </script>

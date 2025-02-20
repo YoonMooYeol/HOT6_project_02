@@ -36,6 +36,7 @@ export const useMessages = () => {
           throw new Error('인증이 필요합니다.');
         }
 
+        // 1. 메시지 전송 먼저 수행
         const response = await fetch(API_URL, {
           method: 'POST',
           headers: {
@@ -46,13 +47,49 @@ export const useMessages = () => {
             input_content: text
           })
         });
-  
+
         if (!response.ok) {
           throw new Error('API 요청 실패');
         }
-  
+
         const data = await response.json();
-        console.log('보낸 메시지 응답:', data);  // 서버 응답 데이터 출력
+        console.log('보낸 메시지 응답:', data);
+
+        // 2. 사용자 정보 API 호출
+        const userResponse = await fetch('http://127.0.0.1:8000/api/auth/user/', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!userResponse.ok) {
+          throw new Error('사용자 정보 가져오기 실패');
+        }
+
+        const userData = await userResponse.json();
+        console.log('현재 사용자 정보:', userData);
+        console.log('메시지 작성자 ID:', data.user);
+
+        // 3. 메시지 객체 생성 - 숫자 타입으로 명시적 변환하여 비교
+        const newMessage = {
+          text: data.output_content || data.input_content,
+          input_content: data.input_content,
+          isMine: Number(data.user) === Number(userData.id),  // 숫자 타입으로 변환하여 비교
+          isOriginal: !data.output_content,
+          createdAt: new Date(data.created_at),
+          id: data.id
+        };
+
+        console.log('메시지 비교:', {
+          messageUserId: Number(data.user),
+          currentUserId: Number(userData.id),
+          isMine: newMessage.isMine
+        });
+
+        // 4. 메시지 목록에 추가
+        messages.value.push(newMessage);
+
         return data;
       } catch (error) {
         console.error('메시지 저장 중 오류 발생:', error);
@@ -72,6 +109,24 @@ export const useMessages = () => {
           throw new Error('인증이 필요합니다.');
         }
 
+        // 먼저 사용자 정보를 가져옴
+        const userResponse = await fetch('http://127.0.0.1:8000/api/auth/user/', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!userResponse.ok) {
+          throw new Error('사용자 정보 가져오기 실패');
+        }
+
+        const userData = await userResponse.json();
+        console.log('사용자 정보 응답:', userData);
+
+        const currentUserId = userData.id;
+
+        // 메시지 가져오기
         const response = await fetch(API_URL, {
           method: 'GET',
           headers: {
@@ -85,15 +140,14 @@ export const useMessages = () => {
         }
 
         const data = await response.json();
-        // 현재는 user_id가 3으로 고정
-        const currentUserId = 3;  // 임시로 고정
         
         console.log('현재 사용자 ID:', currentUserId);
         console.log('메시지 데이터:', data);
 
+        // 메시지 매핑 - 현재 사용자의 메시지 여부로 isMine 설정
         messages.value = data.map(msg => {
-          const isMine = msg.user === currentUserId;
-          console.log(`메시지 ID ${msg.id}: user=${msg.user}, currentUserId=${currentUserId}, isMine=${isMine}`);
+          const isMine = Number(msg.user) === Number(currentUserId);
+          console.log(`메시지 ID ${msg.id}: messageUser=${Number(msg.user)}, currentUserId=${Number(currentUserId)}, isMine=${isMine}`);
           
           return {
             text: msg.output_content || msg.input_content,
