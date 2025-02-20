@@ -3,7 +3,7 @@ import main from '../views/main.vue'
 import FemaleChat from '../views/femaleChat.vue'
 import LogIn from '../views/LogIn.vue'
 import SignUp from '../views/SignUp.vue'
-
+import maleChat from '../views/maleChat.vue'
 const routes = [
   {
     path: '/',
@@ -24,6 +24,11 @@ const routes = [
     path: '/signup',
     name: 'signup',
     component: SignUp
+  },
+  {
+    path: '/male-chat',
+    name: 'maleChat',
+    component: maleChat
   }
 ]
 

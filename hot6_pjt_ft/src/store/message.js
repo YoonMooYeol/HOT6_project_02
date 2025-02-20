@@ -7,17 +7,12 @@ const POLLING_INTERVAL = 500
 // API 엔드포인트 상수 정의
 const API_URL = 'http://127.0.0.1:8000/api/v1/chat/json-drf/'
 
-// 웜모드 상태를 가져오는 API 엔드포인트
-const WARM_MODE_URL = 'http://127.0.0.1:8000/api/v1/chat/toggle-warm-mode/'
-
 // 메시지 저장소
 const messages = ref([]);
 
 const state = reactive({
   isPopupVisible: false,
-  isWarmMode: false,
-  isLoading: false,
-  isSending: false
+  isSending: false,
 });
 
 // useMessages: 메시지 관리를 위한 커스텀 훅(hook) 함수
@@ -36,10 +31,16 @@ export const useMessages = () => {
     // text: 저장할 메시지 내용ㄴ
     const saveMessage = async (text) => {
       try {
+        const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+        if (!token) {
+          throw new Error('인증이 필요합니다.');
+        }
+
         const response = await fetch(API_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
             input_content: text
@@ -51,8 +52,8 @@ export const useMessages = () => {
         }
   
         const data = await response.json();
-        console.log(data);
-        return data;  // 전체 응답 데이터를 그대로 반환
+        console.log('보낸 메시지 응답:', data);  // 서버 응답 데이터 출력
+        return data;
       } catch (error) {
         console.error('메시지 저장 중 오류 발생:', error);
         throw error;
@@ -66,10 +67,16 @@ export const useMessages = () => {
     // getAllMessages: 모든 메시지를 가져오는 함수 추가
     const getAllMessages = async () => {
       try {
+        const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+        if (!token) {
+          throw new Error('인증이 필요합니다.');
+        }
+
         const response = await fetch(API_URL, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           }
         });
 
@@ -78,15 +85,25 @@ export const useMessages = () => {
         }
 
         const data = await response.json();
-        // id 포함하여 messages 업데이트
-        messages.value = data.map(msg => ({
-          text: msg.output_content || msg.input_content,  // output_content가 있으면 사용, 없으면 input_content 사용
-          input_content: msg.input_content,  // 원본 메시지 저장
-          isMine: true,
-          isOriginal: !msg.output_content,  // output_content가 없으면 원본 메시지
-          createdAt: new Date(msg.created_at),
-          id: msg.id
-        }));
+        // 현재는 user_id가 3으로 고정
+        const currentUserId = 3;  // 임시로 고정
+        
+        console.log('현재 사용자 ID:', currentUserId);
+        console.log('메시지 데이터:', data);
+
+        messages.value = data.map(msg => {
+          const isMine = msg.user === currentUserId;
+          console.log(`메시지 ID ${msg.id}: user=${msg.user}, currentUserId=${currentUserId}, isMine=${isMine}`);
+          
+          return {
+            text: msg.output_content || msg.input_content,
+            input_content: msg.input_content,
+            isMine: isMine,
+            isOriginal: !msg.output_content,
+            createdAt: new Date(msg.created_at),
+            id: msg.id
+          };
+        });
         
         return data;
       } catch (error) {
@@ -95,56 +112,32 @@ export const useMessages = () => {
       }
     };
   
-    // 웜모드 상태 가져오기
-    const getWarmMode = async () => {
+    // 번역 선택 API 호출 함수 추가
+    const selectTranslation = async (messageId, selectedIndex) => {
       try {
-        // 서버에서 웜모드 상태를 가져옴
-        const response = await fetch(WARM_MODE_URL, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error('웜모드 상태 가져오기 실패');
+        const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+        if (!token) {
+          throw new Error('인증이 필요합니다.');
         }
-        
-        const data = await response.json();
-        state.isWarmMode = data.warm_mode;
-        return state.isWarmMode;
-      } catch (error) {
-        console.error('Error getting warm mode:', error);
-        return false;
-      }
-    };
-  
-    // 웜모드 토글
-    const toggleWarmMode = async () => {
-      try {
-        state.isLoading = true;
-        // 서버에 웜모드 상태 전송
-        const response = await fetch(WARM_MODE_URL, {
+
+        const response = await fetch(`http://127.0.0.1:8000/api/v1/chat/select-translation/${messageId}/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
-            warm_mode: !state.isWarmMode
+            selected_index: selectedIndex
           })
         });
-        
+
         if (!response.ok) {
-          throw new Error('웜모드 상태 변경 실패');
+          throw new Error('번역 선택 실패');
         }
-        
-        const data = await response.json();
-        state.isWarmMode = data.warm_mode;
-        state.isLoading = false;
-        return state.isWarmMode;
+
+        return await response.json();
       } catch (error) {
-        console.error('Error toggling warm mode:', error);
-        state.isLoading = false;
+        console.error('번역 선택 중 오류 발생:', error);
         throw error;
       }
     };
@@ -156,8 +149,7 @@ export const useMessages = () => {
       saveMessage,  // 새 메시지 저장 함수
       clearMessages,  // 메시지 삭제 함수
       getAllMessages,  // 새로운 함수 추가
-      getWarmMode,    // 웜모드 상태 가져오기 함수 추가
-      toggleWarmMode,  // 웜모드 토글 함수 추가
+      selectTranslation,  // 추가
       state  // 상태 객체 추가
     }
   }

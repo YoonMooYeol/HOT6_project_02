@@ -2,7 +2,7 @@
   <!-- 전체 앱을 감싸는 최상위 컨테이너 -->
   <div class="app">
     <!-- 채팅창을 감싸는 컨테이너. isWarmMode에 따라 배경색이 변경됨 -->
-    <div class="chat-container" :class="{ warm: state.isWarmMode }">
+    <div class="chat-container" :class="{ warm: warmState.isWarmMode }">
       <!-- 상단 네비게이션 바 컴포넌트. isWarmMode 상태를 props로 전달 -->
       <navBar />
 
@@ -19,12 +19,21 @@
         >
           <!-- 개별 메시지 말풍선 -->
           <div class="chat-bubble">
-            <!-- 원본 메시지 (회색, 작은 글씨로 표시) -->
-            <div v-if="message.input_content && !message.isOriginal" class="input-content">
-              {{ message.input_content }}
-            </div>
-            <!-- 번역된 메시지 또는 원본 메시지 (일반 크기로 표시) -->
-            <div class="output-content">{{ message.text }}</div>
+            <!-- 내 메시지일 때는 원본과 번역 모두 표시 -->
+            <template v-if="message.isMine">
+              <div v-if="message.input_content" class="input-content">
+                {{ message.input_content }}
+              </div>
+              <div v-if="message.text && !message.isOriginal" class="output-content">
+                {{ message.text }}
+              </div>
+            </template>
+            <!-- 상대방 메시지일 때는 번역된 메시지만 표시 -->
+            <template v-else>
+              <div class="output-content">
+                {{ message.text }}
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -56,104 +65,31 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch, nextTick } from "vue";
 import NavBar from "../components/NavBar.vue";
 import FootBar from "../components/FootBar.vue";
-import { useMessages } from "../store/message";
+import { useChat } from "../composables/useChat";
+import { onMounted, onUnmounted } from "vue";
 
-const { messages, getAllMessages, state } = useMessages();
-const options = ref([]);
+const {
+  sortedMessages,
+  messages,
+  options,
+  state,
+  warmState,
+  showOptions,
+  selectOption,
+  updateWarmMode,
+  setupChat
+} = useChat();
 
-// 메시지를 생성 시간순으로 정렬
-const sortedMessages = computed(() => {
-  return [...messages.value].sort((a, b) => {
-    return new Date(a.createdAt) - new Date(b.createdAt);
-  });
-});
-
-// 메시지 로드 함수
-const loadMessages = async () => {
-  try {
-    await getAllMessages();
-    const chatContent = document.querySelector('.chat-content');
-    if (chatContent) {
-      chatContent.scrollTop = chatContent.scrollHeight;
-    }
-  } catch (error) {
-    console.error('메시지 로드 실패:', error);
-  }
-};
-
-// 메시지 변경 감지
-watch(messages, () => {
-  const chatContent = document.querySelector('.chat-content');
-  if (chatContent) {
-    nextTick(() => {
-      chatContent.scrollTop = chatContent.scrollHeight;
-    });
-  }
-}, { deep: true });
-
+let cleanup;
 onMounted(() => {
-  loadMessages();
+  cleanup = setupChat();
 });
 
-// 새로고침 이벤트 리스너
-window.addEventListener('focus', () => {
-  loadMessages();
+onUnmounted(() => {
+  if (cleanup) cleanup();
 });
-
-const showOptions = (newOptions, messageId) => {
-  options.value = newOptions;
-  state.currentMessageId = messageId;
-  state.isPopupVisible = true;
-};
-
-const selectOption = async (option, index) => {
-  try {
-    console.log('선택된 옵션:', option);
-    console.log('선택된 인덱스:', index);
-    console.log('메시지 ID:', state.currentMessageId);
-
-    // API 호출
-    const response = await fetch(`http://127.0.0.1:8000/api/v1/chat/select-translation/${state.currentMessageId}/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        selected_index: index
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error('API 호출 실패');
-    }
-
-    const responseData = await response.json();
-    console.log('서버 응답:', responseData);
-    
-    // 서버 응답 데이터를 메시지 목록에 추가
-    messages.value = messages.value.map(msg => {
-      if (msg.id === responseData.id) {
-        return {
-          ...msg,
-          text: responseData.output_content,  // 번역된 메시지로 업데이트
-          isOriginal: false
-        };
-      }
-      return msg;
-    });
-    
-    state.isPopupVisible = false;
-  } catch (error) {
-    console.error('옵션 선택 처리 실패:', error);
-  }
-};
-
-const updateWarmMode = (newState) => {
-  console.log('Updating warm mode:', newState);  // 디버깅용
-};
 </script>
 
 <style scoped>
@@ -212,6 +148,7 @@ const updateWarmMode = (newState) => {
   margin: 2px 0;
   display: flex;
   flex-direction: column;
+  gap: 4px;
 }
 
 .mine .chat-bubble {
@@ -220,6 +157,20 @@ const updateWarmMode = (newState) => {
 
 .other .chat-bubble {
   background-color: #fff;
+}
+
+/* 입력 메시지와 출력 메시지의 스타일 통일 */
+.input-content, .output-content {
+  font-size: 1em;
+  color: #000;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* 번역된 메시지가 있을 때만 입력 메시지 스타일 변경 */
+.chat-bubble:has(.output-content) .input-content {
+  font-size: 0.9em;
+  color: #666;
 }
 
 .empty-message {
@@ -278,16 +229,5 @@ const updateWarmMode = (newState) => {
 
 .option-btn:hover {
   background: #ff1493;
-}
-
-.input-content {
-  font-size: 0.8em;
-  color: #666;
-  margin-bottom: 4px;
-}
-
-.output-content {
-  font-size: 1em;
-  color: #000;
 }
 </style>

@@ -1,6 +1,6 @@
 <!-- src/components/navBar.vue -->
 <template>
-  <div class="nav-bar" :class="{ warm: state.isWarmMode }">
+  <div class="nav-bar" :class="{ warm: warmState.isWarmMode }">
     <span @click="goBack">◀</span>
     <h1>🩵</h1>
     <span>☰</span>
@@ -9,11 +9,10 @@
 
 <script setup>
 import { useRouter } from 'vue-router';
-import { useMessages } from "../store/message";
-
-const { state } = useMessages();
+import { useWarm } from "../store/warm";
 
 const router = useRouter();
+const { warmState } = useWarm();
 
 const goBack = () => {
   router.go(-1);  // 뒤로가기

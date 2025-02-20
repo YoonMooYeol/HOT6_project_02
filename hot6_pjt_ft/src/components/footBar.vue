@@ -1,8 +1,8 @@
 <template>
-  <div class="foot-bar" :class="{ warm: state.isWarmMode }">
+  <div class="foot-bar" :class="{ warm: warmState.isWarmMode }">
     <button class="heart-button" 
-      @click="toggleWarmMode">
-      {{ state.isLoading ? "..." : (state.isWarmMode ? "♥︎" : "♡") }}
+      @click="handleToggleWarmMode">
+      {{ warmState.isLoading ? "..." : (warmState.isWarmMode ? "♥︎" : "♡") }}
     </button>
     <input 
       v-model="newMessage" 
@@ -19,26 +19,58 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { useMessages } from "../store/message";
+import { useWarm } from "../store/warm";
 
 const emit = defineEmits(['updateWarmMode', 'showOptions']);
-const { messages, saveMessage, getWarmMode, toggleWarmMode, state } = useMessages();
+const { messages, saveMessage, state } = useMessages();
+const { warmState, getWarmMode, toggleWarmMode } = useWarm();
+
 const newMessage = ref("");
 const isSending = ref(false);
-const getInitialWarmMode = async () => {
+let warmCheckInterval = null;
+let lastCheckTime = 0;  // 마지막 체크 시간
+const CHECK_INTERVAL = 3000;  // 체크 간격을 3초로 증가
+
+// 웜모드 상태 체크 함수
+const checkWarmMode = async () => {
+  const now = Date.now();
+  // 마지막 체크로부터 3초가 지나지 않았다면 스킵
+  if (now - lastCheckTime < CHECK_INTERVAL) return;
+  
   try {
     const warmMode = await getWarmMode();
-    state.isWarmMode = warmMode;
-    emit('updateWarmMode', warmMode);
+    if (warmState.isWarmMode !== warmMode) {
+      emit('updateWarmMode', warmMode);
+    }
+    lastCheckTime = now;
   } catch (error) {
-    console.error('Error getting warm mode:', error);
+    console.error('웜모드 상태 체크 실패:', error);
   }
 };
 
-// 컴포넌트 마운트 시 초기 상태 가져오기
+// 웜모드 토글 핸들러
+const handleToggleWarmMode = async () => {
+  try {
+    await toggleWarmMode();
+    emit('updateWarmMode', warmState.isWarmMode);
+    lastCheckTime = Date.now();  // 토글 후 바로 체크하지 않도록 시간 업데이트
+  } catch (error) {
+    console.error('Error toggling warm mode:', error);
+  }
+};
+
+// 컴포넌트 마운트 시 인터벌 시작
 onMounted(() => {
-  getInitialWarmMode();
+  checkWarmMode();  // 초기 상태 체크
+  warmCheckInterval = setInterval(checkWarmMode, 1000);  // 1초마다 체크 시도 (실제로는 3초 간격)
+});
+
+onUnmounted(() => {
+  if (warmCheckInterval) {
+    clearInterval(warmCheckInterval);
+  }
 });
 
 const handleSend = async () => {
@@ -47,20 +79,20 @@ const handleSend = async () => {
   isSending.value = true;
   try {
     const data = await saveMessage(newMessage.value);
+    const currentUserId = 3;  // 임시로 고정
     
     // 사용자 메시지 추가
     messages.value.push({
       text: data.input_content,
-      input_content: data.input_content,  // 원본 메시지 저장
-      isMine: true,
-      isOriginal: true,  // 새로 입력한 메시지는 원본
+      input_content: data.input_content,
+      isMine: data.user === currentUserId,
+      isOriginal: true,
       createdAt: new Date(data.created_at),
       id: data.id
     });
 
-    if (data.translated_content) {
-      const options = data.translated_content.split('\n').map(opt => opt.replace(/"/g, ''));
-      emit('showOptions', options, data.id);
+    if (data.translated_content && data.translated_content.length > 0) {
+      emit('showOptions', data.translated_content, data.id);
     }
     newMessage.value = '';
   } catch (error) {

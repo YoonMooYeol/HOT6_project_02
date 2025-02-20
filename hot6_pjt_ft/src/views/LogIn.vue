@@ -56,12 +56,16 @@ const formData = ref({
 
 const handleLogin = async () => {
   try {
+    // 로그인 API 엔드포인트 수정
     const response = await fetch('http://127.0.0.1:8000/api/auth/token/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(formData.value)
+      body: JSON.stringify({
+        username: formData.value.username,
+        password: formData.value.password,
+      }),
     });
 
     if (!response.ok) {
@@ -69,23 +73,33 @@ const handleLogin = async () => {
     }
 
     const data = await response.json();
-    console.log('로그인 성공:', data);
-    
+    console.log('로그인 응답:', data);
+
     // 토큰 저장
     if (keepLoggedIn.value) {
-      // 로그인 유지가 체크되었을 경우 localStorage에 저장
       localStorage.setItem('access_token', data.access);
       localStorage.setItem('refresh_token', data.refresh);
     } else {
-      // 체크되지 않았을 경우 sessionStorage에 저장 (브라우저 종료 시 삭제)
       sessionStorage.setItem('access_token', data.access);
       sessionStorage.setItem('refresh_token', data.refresh);
     }
+
+    // user_id 저장
+    const userResponse = await fetch('http://127.0.0.1:8000/api/v1/accounts/user/', {
+      headers: {
+        'Authorization': `Bearer ${data.access}`
+      }
+    });
     
-    // 로그인 성공 시 메인 페이지로 이동
-    router.push('/');
+    if (userResponse.ok) {
+      const userData = await userResponse.json();
+      localStorage.setItem('user_id', userData.id.toString());
+    }
+
+    // 로그인 성공 시 채팅방으로 이동
+    router.push('/female-chat');  // 또는 '/male-chat'
   } catch (error) {
-    console.error('로그인 중 오류 발생:', error);
+    console.error('로그인 오류:', error);
     alert('아이디 또는 비밀번호가 올바르지 않습니다.');
   }
 };
