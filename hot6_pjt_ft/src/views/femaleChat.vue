@@ -87,9 +87,11 @@ const loadMessages = async () => {
 // 메시지 변경 감지
 watch(messages, () => {
   const chatContent = document.querySelector('.chat-content');
-  nextTick(() => {
+  if (chatContent) {
+    nextTick(() => {
       chatContent.scrollTop = chatContent.scrollHeight;
     });
+  }
 }, { deep: true });
 
 onMounted(() => {
