@@ -56,7 +56,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, onMounted, computed, watch, nextTick } from "vue";
 import NavBar from "../components/NavBar.vue";
 import FootBar from "../components/FootBar.vue";
 import { useMessages } from "../store/message";
@@ -88,7 +88,9 @@ const loadMessages = async () => {
 watch(messages, () => {
   const chatContent = document.querySelector('.chat-content');
   if (chatContent) {
-    chatContent.scrollTop = chatContent.scrollHeight;
+    nextTick(() => {
+      chatContent.scrollTop = chatContent.scrollHeight;
+    });
   }
 }, { deep: true });
 
