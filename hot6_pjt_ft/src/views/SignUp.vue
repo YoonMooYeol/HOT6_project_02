@@ -1,0 +1,211 @@
+<template>
+  <div class="signup-container">
+    <div class="signup-form">
+      <h2>회원가입</h2>
+      
+      <div class="form-group">
+        <label for="username">아이디</label>
+        <input 
+          type="text" 
+          id="username" 
+          v-model="formData.username"
+          placeholder="아이디를 입력하세요"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="password">비밀번호</label>
+        <input 
+          type="password" 
+          id="password" 
+          v-model="formData.password"
+          placeholder="비밀번호를 입력하세요"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="password2">비밀번호 확인</label>
+        <input 
+          type="password" 
+          id="password2" 
+          v-model="formData.password2"
+          placeholder="비밀번호를 다시 입력하세요"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="name">이름</label>
+        <input 
+          type="text" 
+          id="name" 
+          v-model="formData.name"
+          placeholder="이름을 입력하세요"
+        >
+      </div>
+
+      <div class="form-group">
+        <label>성별</label>
+        <div class="gender-buttons">
+          <button 
+            :class="['gender-button', formData.gender === 'M' ? 'active' : '']"
+            @click="selectGender('M')"
+          >
+            남성
+          </button>
+          <button 
+            :class="['gender-button', formData.gender === 'F' ? 'active' : '']"
+            @click="selectGender('F')"
+          >
+            여성
+          </button>
+        </div>
+      </div>
+
+      <button class="signup-button" @click="handleSignup">회원가입</button>
+      
+      <p class="login-link">
+        이미 계정이 있으신가요? 
+        <router-link to="/login">로그인하기</router-link>
+      </p>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
+const formData = ref({
+  username: '',
+  password: '',
+  password2: '',
+  name: '',
+  gender: ''
+});
+
+const selectGender = (gender) => {
+  formData.value.gender = gender;
+};
+
+const handleSignup = async () => {
+  try {
+    const response = await fetch('http://127.0.0.1:8000/api/auth/register/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData.value)
+    });
+
+    if (!response.ok) {
+      throw new Error('회원가입 실패');
+    }
+
+    const data = await response.json();
+    console.log('회원가입 성공:', data);
+    
+    // 회원가입 성공 시 로그인 페이지로 이동
+    router.push('/login');
+  } catch (error) {
+    console.error('회원가입 중 오류 발생:', error);
+    alert('회원가입에 실패했습니다. 다시 시도해주세요.');
+  }
+};
+</script>
+
+<style scoped>
+.signup-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.signup-form {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+}
+
+h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #666;
+}
+
+input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.gender-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.gender-button {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.gender-button.active {
+  background: #ff69b4;
+  color: white;
+  border-color: #ff69b4;
+}
+
+.signup-button {
+  width: 100%;
+  padding: 0.75rem;
+  background: #ff69b4;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.signup-button:hover {
+  background: #ff1493;
+}
+
+.login-link {
+  text-align: center;
+  margin-top: 1rem;
+  color: #666;
+}
+
+.login-link a {
+  color: #ff69b4;
+  text-decoration: none;
+}
+
+.login-link a:hover {
+  text-decoration: underline;
+}
+</style>
