@@ -5,7 +5,8 @@ import { ref, reactive } from 'vue'
 const POLLING_INTERVAL = 500
 
 // API 엔드포인트 상수 정의
-const API_URL = 'http://127.0.0.1:8000/api/v1/chat/json-drf/'
+const API_URL = 'http://127.0.0.1:8000/api/v1/chat/json-drf'  // POST 요청용 엔드포인트
+const MESSAGES_URL = 'http://127.0.0.1:8000/api/v1/chat/messages'  // GET 요청용 엔드포인트
 
 // 웜모드 상태를 가져오는 API 엔드포인트
 const WARM_MODE_URL = 'http://127.0.0.1:8000/api/v1/chat/set-warm-mode/'
@@ -43,7 +44,7 @@ export const useMessages = () => {
           throw new Error('인증이 필요합니다.');
         }
 
-        const response = await fetch(API_URL, {
+        const response = await fetch(API_URL + '/', {  // POST 요청은 json-drf 엔드포인트 사용
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -75,40 +76,58 @@ export const useMessages = () => {
     const getAllMessages = async () => {
       try {
         const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
-        const currentUserId = parseInt(localStorage.getItem('user_id')); // 로그인 시 저장된 user_id 가져오기
+        const userGender = localStorage.getItem('user_gender');
         
         if (!token) {
           throw new Error('인증이 필요합니다.');
         }
 
-        const response = await fetch(API_URL, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        // 두 사용자(2, 3)의 메시지를 모두 가져오기
+        const [response2, response3] = await Promise.all([
+          fetch(`${MESSAGES_URL}/2/`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          }),
+          fetch(`${MESSAGES_URL}/3/`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          })
+        ]);
 
-        if (!response.ok) {
+        if (!response2.ok || !response3.ok) {
           throw new Error('API 요청 실패');
         }
 
-        const data = await response.json();
-        console.log('메시지 데이터:', data);
+        const data2 = await response2.json();
+        const data3 = await response3.json();
+        
+        // 두 사용자의 메시지를 합치기
+        const allMessages = [...data2, ...data3];
+        console.log('모든 메시지 데이터:', allMessages);
 
-        // 메시지 매핑 - 현재 사용자의 메시지 여부로 isMine 설정
-        messages.value = data.map(msg => ({
+        // 메시지 매핑 - 현재 사용자의 성별에 따라 isMine 설정
+        messages.value = allMessages.map(msg => ({
           text: msg.output_content || msg.input_content,
           input_content: msg.input_content,
-          isMine: msg.user_gender === state.userGender,  // 같은 성별이면 오른쪽
+          isMine: userGender === 'F' ? 
+            parseInt(msg.user) === 2 :  // 여성 채팅방: user_id가 2면 오른쪽
+            parseInt(msg.user) === 3,   // 남성 채팅방: user_id가 3이면 오른쪽
           isOriginal: !msg.output_content,
           createdAt: new Date(msg.created_at),
           id: msg.id,
-          user: msg.user,
-          userGender: msg.user_gender
+          user: msg.user
         }));
         
-        return data;
+        // 시간순으로 정렬
+        messages.value.sort((a, b) => a.createdAt - b.createdAt);
+        
+        return allMessages;
       } catch (error) {
         console.error('메시지 조회 중 오류 발생:', error);
         throw error;
