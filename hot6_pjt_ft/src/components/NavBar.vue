@@ -1,6 +1,6 @@
 <!-- src/components/navBar.vue -->
 <template>
-  <div class="nav-bar" :class="{ warm: isWarmMode }">
+  <div class="nav-bar" :class="{ warm: state.isWarmMode }">
     <span @click="goBack">◀</span>
     <h1>🩵</h1>
     <span>☰</span>
@@ -9,13 +9,9 @@
 
 <script setup>
 import { useRouter } from 'vue-router';
+import { useMessages } from "../store/message";
 
-const props = defineProps({
-  isWarmMode: {
-    type: Boolean,
-    default: false
-  }
-});
+const { state } = useMessages();
 
 const router = useRouter();
 

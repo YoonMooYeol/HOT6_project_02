@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 
 // 메시지 목록을 갱신하는 주기를 밀리초 단위로 설정
 // 500ms = 0.5초마다 메시지 목록을 새로고침
@@ -6,10 +6,19 @@ const POLLING_INTERVAL = 500
 
 // API 엔드포인트 상수 정의
 const API_URL = 'http://127.0.0.1:8000/api/v1/chat/json-drf/'
-const isWarmMode = ref(false);  // 웜모드 상태를 저장할 ref 추가
+
+// 웜모드 상태를 가져오는 API 엔드포인트
+const WARM_MODE_URL = 'http://127.0.0.1:8000/api/v1/chat/toggle-warm-mode/'
 
 // 메시지 저장소
 const messages = ref([]);
+
+const state = reactive({
+  isPopupVisible: false,
+  isWarmMode: false,
+  isLoading: false,
+  isSending: false
+});
 
 // useMessages: 메시지 관리를 위한 커스텀 훅(hook) 함수
 // sender: 메시지 발신자 구분을 위한 매개변수 ('male' 또는 'female')
@@ -87,10 +96,21 @@ export const useMessages = () => {
     // 웜모드 상태 가져오기
     const getWarmMode = async () => {
       try {
-        // localStorage에서 웜모드 상태를 가져옴
-        const warmMode = localStorage.getItem('warm-mode');
-        isWarmMode.value = warmMode === 'true';
-        return isWarmMode.value;
+        // 서버에서 웜모드 상태를 가져옴
+        const response = await fetch(WARM_MODE_URL, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('웜모드 상태 가져오기 실패');
+        }
+        
+        const data = await response.json();
+        state.isWarmMode = data.warm_mode;
+        return state.isWarmMode;
       } catch (error) {
         console.error('Error getting warm mode:', error);
         return false;
@@ -100,12 +120,29 @@ export const useMessages = () => {
     // 웜모드 토글
     const toggleWarmMode = async () => {
       try {
-        isWarmMode.value = !isWarmMode.value;
-        // localStorage에 웜모드 상태 저장
-        localStorage.setItem('warm-mode', isWarmMode.value);
-        return isWarmMode.value;
+        state.isLoading = true;
+        // 서버에 웜모드 상태 전송
+        const response = await fetch(WARM_MODE_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            warm_mode: !state.isWarmMode
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error('웜모드 상태 변경 실패');
+        }
+        
+        const data = await response.json();
+        state.isWarmMode = data.warm_mode;
+        state.isLoading = false;
+        return state.isWarmMode;
       } catch (error) {
         console.error('Error toggling warm mode:', error);
+        state.isLoading = false;
         throw error;
       }
     };
@@ -118,7 +155,8 @@ export const useMessages = () => {
       clearMessages,  // 메시지 삭제 함수
       getAllMessages,  // 새로운 함수 추가
       getWarmMode,    // 웜모드 상태 가져오기 함수 추가
-      toggleWarmMode  // 웜모드 토글 함수 추가
+      toggleWarmMode,  // 웜모드 토글 함수 추가
+      state  // 상태 객체 추가
     }
   }
   

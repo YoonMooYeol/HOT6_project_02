@@ -1,16 +1,18 @@
 <template>
-  <div class="foot-bar" :class="{ warm: isWarmMode }">
+  <div class="foot-bar" :class="{ warm: state.isWarmMode }">
     <button class="heart-button" 
-      @click="toggleLike">
-      {{ isLoading ? "..." : (isWarmMode ? "♥︎" : "♡") }}
+      @click="toggleWarmMode">
+      {{ state.isLoading ? "..." : (state.isWarmMode ? "♥︎" : "♡") }}
     </button>
     <input 
       v-model="newMessage" 
       @keyup.enter="handleSend"
       placeholder="메시지 입력" 
+      :disabled="isSending || state.isPopupVisible"
     />
     <button class="send-button" 
-      @click="handleSend">
+      @click="handleSend"
+      :disabled="isSending || state.isPopupVisible">
       {{ isSending ? "..." : "➢" }}
     </button>
   </div>
@@ -21,17 +23,13 @@ import { ref, onMounted } from "vue";
 import { useMessages } from "../store/message";
 
 const emit = defineEmits(['updateWarmMode', 'showOptions']);
-const { messages, saveMessage, getWarmMode, toggleWarmMode } = useMessages();
+const { messages, saveMessage, getWarmMode, toggleWarmMode, state } = useMessages();
 const newMessage = ref("");
-const isWarmMode = ref(false);
-const isLoading = ref(false);
 const isSending = ref(false);
-
-// 초기 warm mode 상태 가져오기
 const getInitialWarmMode = async () => {
   try {
     const warmMode = await getWarmMode();
-    isWarmMode.value = warmMode;
+    state.isWarmMode = warmMode;
     emit('updateWarmMode', warmMode);
   } catch (error) {
     console.error('Error getting warm mode:', error);
@@ -67,31 +65,6 @@ const handleSend = async () => {
     console.error('Error sending message:', error);
   } finally {
     isSending.value = false;
-  }
-};
-
-const toggleLike = async () => {
-  if (isLoading.value) return;
-  
-  isLoading.value = true;
-  try {
-    // 서버에 웜모드 상태 전송하고 응답 받기
-    const response = await fetch('http://127.0.0.1:8000/api/v1/chat/toggle-warm-mode/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-      }
-    });
-    
-    const data = await response.json();
-    isWarmMode.value = data.warm_mode; // 서버에서 받은 warm_mode 값으로 설정
-    emit('updateWarmMode', data.warm_mode);
-    
-  } catch (error) {
-    console.error('Error toggling warm mode:', error);
-  } finally {
-    isLoading.value = false;
   }
 };
 </script>
