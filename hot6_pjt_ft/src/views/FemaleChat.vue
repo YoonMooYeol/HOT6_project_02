@@ -19,8 +19,14 @@
         >
           <!-- 개별 메시지 말풍선 -->
           <div class="chat-bubble">
-            <!-- 원본 메시지 (회색, 작은 글씨로 표시) -->
-            <div v-if="message.input_content && !message.isOriginal" class="input-content">
+            <!-- 내 메시지(오른쪽)이고 웜모드일 때만 원본 메시지 표시 -->
+            <div 
+              v-if="message.isMine && 
+                    message.input_content && 
+                    !message.isOriginal && 
+                    state.isWarmMode" 
+              class="input-content"
+            >
               {{ message.input_content }}
             </div>
             <!-- 번역된 메시지 또는 원본 메시지 (일반 크기로 표시) -->
@@ -64,11 +70,14 @@ import { useMessages } from "../store/message";
 const { messages, getAllMessages, state } = useMessages();
 const options = ref([]);
 
-// 메시지를 생성 시간순으로 정렬
+// 메시지를 생성 시간순으로 정렬하고 isMine 속성 설정
 const sortedMessages = computed(() => {
-  return [...messages.value].sort((a, b) => {
-    return new Date(a.createdAt) - new Date(b.createdAt);
-  });
+  return [...messages.value]
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+    .map(msg => ({
+      ...msg,
+      isMine: msg.user === state.currentUserId  // 내가 쓴 메시지면 오른쪽
+    }));
 });
 
 // 메시지 로드 함수
@@ -96,6 +105,8 @@ watch(messages, () => {
 
 onMounted(() => {
   loadMessages();
+  console.log(messages.value[0]);
+  console.log(state.user);
 });
 
 // 새로고침 이벤트 리스너
@@ -114,7 +125,7 @@ const selectOption = async (option, index) => {
     console.log('선택된 옵션:', option);
     console.log('선택된 인덱스:', index);
     console.log('메시지 ID:', state.currentMessageId);
-
+    console.log('현재 사용자 ID:', state.currentUserId);  // undefined 대신 실제 ID 출력
     // 토큰 가져오기
     const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
     if (!token) {

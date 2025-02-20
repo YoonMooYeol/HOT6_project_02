@@ -61,7 +61,10 @@ const handleLogin = async () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(formData.value)
+      body: JSON.stringify({
+        username: formData.value.username,
+        password: formData.value.password,
+      }),
     });
 
     if (!response.ok) {
@@ -69,24 +72,41 @@ const handleLogin = async () => {
     }
 
     const data = await response.json();
-    console.log('로그인 성공:', data);
-    
-    // 토큰 저장
+    console.log('토큰 응답:', data);
+
+    // JWT 토큰 디코딩
+    const token = data.access;
+    const tokenPayload = JSON.parse(atob(token.split('.')[1]));
+    console.log('토큰 페이로드:', tokenPayload);
+
+    // 토큰에서 user_id 추출
+    const userId = tokenPayload.user_id;
+    const userGender = tokenPayload.gender;
+    console.log('사용자 ID:', userId);
+
+    // 토큰과 사용자 정보 저장
     if (keepLoggedIn.value) {
-      // 로그인 유지가 체크되었을 경우 localStorage에 저장
-      localStorage.setItem('access_token', data.access);
+      localStorage.setItem('access_token', token);
       localStorage.setItem('refresh_token', data.refresh);
+      localStorage.setItem('user_id', userId.toString());
+      localStorage.setItem('user_gender', userGender);
     } else {
-      // 체크되지 않았을 경우 sessionStorage에 저장 (브라우저 종료 시 삭제)
-      sessionStorage.setItem('access_token', data.access);
+      sessionStorage.setItem('access_token', token);
       sessionStorage.setItem('refresh_token', data.refresh);
+      sessionStorage.setItem('user_id', userId.toString());
+      sessionStorage.setItem('user_gender', userGender);
     }
-    
-    // 로그인 성공 시 메인 페이지로 이동
-    router.push('/');
+
+    // 성별에 따라 채팅방으로 이동 (gender도 토큰에서 확인 가능)
+    if (tokenPayload.gender === 'M') {
+      router.push('/male-chat');
+    } else {
+      router.push('/female-chat');
+    }
+
   } catch (error) {
-    console.error('로그인 중 오류 발생:', error);
-    alert('아이디 또는 비밀번호가 올바르지 않습니다.');
+    console.error('로그인 오류:', error);
+    alert('로그인에 실패했습니다. 다시 시도해주세요.');
   }
 };
 </script>

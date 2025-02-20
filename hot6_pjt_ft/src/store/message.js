@@ -17,7 +17,9 @@ const state = reactive({
   isPopupVisible: false,
   isWarmMode: false,
   isLoading: false,
-  isSending: false
+  isSending: false,
+  currentUserId: parseInt(localStorage.getItem('user_id')),
+  userGender: localStorage.getItem('user_gender') // 성별 정보 추가
 });
 
 // useMessages: 메시지 관리를 위한 커스텀 훅(hook) 함수
@@ -73,6 +75,8 @@ export const useMessages = () => {
     const getAllMessages = async () => {
       try {
         const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+        const currentUserId = parseInt(localStorage.getItem('user_id')); // 로그인 시 저장된 user_id 가져오기
+        
         if (!token) {
           throw new Error('인증이 필요합니다.');
         }
@@ -92,29 +96,16 @@ export const useMessages = () => {
         const data = await response.json();
         console.log('메시지 데이터:', data);
 
-        // 현재 사용자 정보 가져오기
-        const userResponse = await fetch('http://127.0.0.1:8000/api/auth/user/', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!userResponse.ok) {
-          throw new Error('사용자 정보 가져오기 실패');
-        }
-
-        const userData = await userResponse.json();
-        const currentUserId = userData.id;
-
         // 메시지 매핑 - 현재 사용자의 메시지 여부로 isMine 설정
         messages.value = data.map(msg => ({
           text: msg.output_content || msg.input_content,
           input_content: msg.input_content,
-          isMine: msg.user === currentUserId,  // 현재 사용자의 메시지인지 여부
+          isMine: msg.user_gender === state.userGender,  // 같은 성별이면 오른쪽
           isOriginal: !msg.output_content,
           createdAt: new Date(msg.created_at),
-          id: msg.id
+          id: msg.id,
+          user: msg.user,
+          userGender: msg.user_gender
         }));
         
         return data;

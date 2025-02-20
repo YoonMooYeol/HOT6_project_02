@@ -91,26 +91,67 @@ const selectGender = (gender) => {
 
 const handleSignup = async () => {
   try {
+    // 필수 필드 체크
+    if (!formData.value.username || !formData.value.password || !formData.value.gender || !formData.value.name) {
+      alert('모든 필드를 입력해주세요.');
+      return;
+    }
+
+    // 비밀번호 확인 체크
+    if (formData.value.password !== formData.value.password2) {
+      alert('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+
+    // 비밀번호 유효성 검사 추가
+    if (formData.value.password.length < 8) {
+      alert('비밀번호는 8자 이상이어야 합니다.');
+      return;
+    }
+
+    // API 요청 데이터 준비
+    const requestData = {
+      username: formData.value.username.trim(),  // 공백 제거
+      password: formData.value.password,
+      password2: formData.value.password2,
+      name: formData.value.name.trim(),  // 공백 제거
+      gender: formData.value.gender
+    };
+
+    console.log('회원가입 요청 데이터:', requestData);
+
     const response = await fetch('http://127.0.0.1:8000/api/auth/register/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(formData.value)
+      body: JSON.stringify(requestData)
     });
 
+    const responseData = await response.json();  // 항상 응답 데이터를 먼저 파싱
+    console.log('서버 응답:', responseData);  // 전체 응답 확인
+
     if (!response.ok) {
-      throw new Error('회원가입 실패');
+      // 서버에서 오는 구체적인 에러 메시지 처리
+      if (responseData.username) {
+        throw new Error(responseData.username[0]);
+      } else if (responseData.password) {
+        throw new Error(responseData.password[0]);
+      } else if (responseData.gender) {
+        throw new Error(responseData.gender[0]);
+      } else if (responseData.name) {
+        throw new Error(responseData.name[0]);
+      } else {
+        throw new Error('회원가입에 실패했습니다.');
+      }
     }
 
-    const data = await response.json();
-    console.log('회원가입 성공:', data);
-    
-    // 회원가입 성공 시 로그인 페이지로 이동
+    console.log('회원가입 성공:', responseData);
+    alert('회원가입이 완료되었습니다.');
     router.push('/login');
   } catch (error) {
     console.error('회원가입 중 오류 발생:', error);
-    alert('회원가입에 실패했습니다. 다시 시도해주세요.');
+    alert(error.message || '회원가입에 실패했습니다.');
   }
 };
 </script>

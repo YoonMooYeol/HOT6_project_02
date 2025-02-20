@@ -1,6 +1,6 @@
 <!-- src/components/navBar.vue -->
 <template>
-  <div class="nav-bar" :class="{ warm: state.isWarmMode }">
+  <div class="nav-bar">
     <span @click="goBack">◀</span>
     <h1>🩵</h1>
     <span>☰</span>
@@ -27,16 +27,16 @@ const goBack = () => {
   align-items: center;
   padding: 10px;
   background-color: #FFFFFF;
-  font-weight: bold;
-  transition: background-color 0.3s ease;  /* 전환 효과 추가 */
+  border-bottom: 1px solid #eee;
+}
+
+.nav-bar h1 {
+  margin: 0;
+  font-size: 1.5em;
 }
 
 .nav-bar span {
   cursor: pointer;
   padding: 5px 10px;
-}
-
-.nav-bar.warm {
-  background-color: #FFE0E0;  /* 웜모드일 때의 배경색 */
 }
 </style>
