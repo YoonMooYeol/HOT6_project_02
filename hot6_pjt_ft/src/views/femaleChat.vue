@@ -20,8 +20,10 @@
           <!-- 개별 메시지 말풍선 -->
           <div class="chat-bubble">
             <!-- 원본 메시지 (회색, 작은 글씨로 표시) -->
-            <div v-if="message.input_content" class="input-content">{{ message.input_content }}</div>
-            <!-- 번역된 메시지 (일반 크기로 표시) -->
+            <div v-if="message.input_content && !message.isOriginal" class="input-content">
+              {{ message.input_content }}
+            </div>
+            <!-- 번역된 메시지 또는 원본 메시지 (일반 크기로 표시) -->
             <div class="output-content">{{ message.text }}</div>
           </div>
         </div>
@@ -128,14 +130,17 @@ const selectOption = async (option, index) => {
 
     const responseData = await response.json();
     console.log('서버 응답:', responseData);
-
-    // output_content를 사용하여 메시지 추가
-    messages.value.push({ 
-      text: responseData.output_content,
-      input_content: responseData.input_content,  // 서버에서 받은 원본 메시지 사용
-      isMine: true,
-      isOriginal: false,
-      createdAt: new Date(responseData.created_at)
+    
+    // 서버 응답 데이터를 메시지 목록에 추가
+    messages.value = messages.value.map(msg => {
+      if (msg.id === responseData.id) {
+        return {
+          ...msg,
+          text: responseData.output_content,  // 번역된 메시지로 업데이트
+          isOriginal: false
+        };
+      }
+      return msg;
     });
     
     state.isPopupVisible = false;
@@ -203,6 +208,8 @@ const updateWarmMode = (newState) => {
   border-radius: 15px;
   background-color: white;
   margin: 2px 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .mine .chat-bubble {
@@ -272,7 +279,7 @@ const updateWarmMode = (newState) => {
 }
 
 .input-content {
-  font-size: 0.85em;
+  font-size: 0.8em;
   color: #666;
   margin-bottom: 4px;
 }

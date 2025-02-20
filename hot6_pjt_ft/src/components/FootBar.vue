@@ -51,7 +51,9 @@ const handleSend = async () => {
     // 사용자 메시지 추가
     messages.value.push({
       text: data.input_content,
+      input_content: data.input_content,  // 원본 메시지 저장
       isMine: true,
+      isOriginal: true,  // 새로 입력한 메시지는 원본
       createdAt: new Date(data.created_at),
       id: data.id
     });

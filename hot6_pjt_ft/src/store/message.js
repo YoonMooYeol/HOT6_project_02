@@ -80,10 +80,12 @@ export const useMessages = () => {
         const data = await response.json();
         // id 포함하여 messages 업데이트
         messages.value = data.map(msg => ({
-          text: msg.input_content,
+          text: msg.output_content || msg.input_content,  // output_content가 있으면 사용, 없으면 input_content 사용
+          input_content: msg.input_content,  // 원본 메시지 저장
           isMine: true,
+          isOriginal: !msg.output_content,  // output_content가 없으면 원본 메시지
           createdAt: new Date(msg.created_at),
-          id: msg.id  // id 추가
+          id: msg.id
         }));
         
         return data;
