@@ -110,7 +110,6 @@ const handleLogin = async () => {
   }
 };
 </script>
-
 <style scoped>
 .login-container {
   display: flex;
@@ -121,7 +120,7 @@ const handleLogin = async () => {
 }
 
 .login-form {
-  background: white;
+  background: #FFE0E0 ;
   padding: 2rem;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -172,17 +171,18 @@ input {
 .login-button {
   width: 100%;
   padding: 0.75rem;
-  background: #ff69b4;
+  background: #BE7272;
   color: white;
   border: none;
   border-radius: 5px;
   font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
   transition: background 0.3s ease;
 }
 
 .login-button:hover {
-  background: #ff1493;
+  background: #a64a4a;
 }
 
 .signup-link {
@@ -192,8 +192,9 @@ input {
 }
 
 .signup-link a {
-  color: #ff69b4;
+  color: #BE7272;
   text-decoration: none;
+  font-weight: 700;
 }
 
 .signup-link a:hover {
