@@ -1,4 +1,5 @@
 <template>
+  
   <div class="app">
     <div class="chat-container" :class="{ liked: isLiked }">
 
@@ -35,6 +36,8 @@
                :selectedMessage="selectedMessage"
       />
     </div>
+    <router-view />
+  
   </div>
 
 </template>
@@ -44,6 +47,8 @@
 import { ref } from "vue";
 import NavBar from "./components/NavBar.vue";
 import FootBar from "./components/FootBar.vue";
+import Welcome from "./views/Welcome.vue";
+
 
 const messages = ref([]);
 const isLiked = ref(false);
