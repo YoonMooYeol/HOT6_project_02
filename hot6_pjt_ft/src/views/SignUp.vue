@@ -19,7 +19,7 @@
           type="password" 
           id="password" 
           v-model="formData.password"
-          placeholder="비밀번호를 입력하세요"
+          placeholder="비밀번호를 입력하세요(8-20자)"
         >
       </div>
 
@@ -123,7 +123,7 @@ const handleSignup = async () => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: #FFE0E0;
 }
 
 .signup-form {
@@ -175,25 +175,26 @@ input {
 }
 
 .gender-button.active {
-  background: #ff69b4;
+  background: #BE7272;
   color: white;
-  border-color: #ff69b4;
+  border-color: #BE7272;
 }
 
 .signup-button {
   width: 100%;
   padding: 0.75rem;
-  background: #ff69b4;
+  background: #BE7272;
   color: white;
   border: none;
   border-radius: 5px;
   font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
   transition: background 0.3s ease;
 }
 
 .signup-button:hover {
-  background: #ff1493;
+  background: #a64a4a;
 }
 
 .login-link {
@@ -203,11 +204,13 @@ input {
 }
 
 .login-link a {
-  color: #ff69b4;
+  color: #BE7272;
   text-decoration: none;
+  font-weight: 700;
 }
 
 .login-link a:hover {
   text-decoration: underline;
+  
 }
 </style>
