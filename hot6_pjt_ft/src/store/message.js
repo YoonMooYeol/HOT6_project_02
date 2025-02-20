@@ -8,7 +8,7 @@ const POLLING_INTERVAL = 500
 const API_URL = 'http://127.0.0.1:8000/api/v1/chat/json-drf/'
 
 // 웜모드 상태를 가져오는 API 엔드포인트
-const WARM_MODE_URL = 'http://127.0.0.1:8000/api/v1/chat/toggle-warm-mode/'
+const WARM_MODE_URL = 'http://127.0.0.1:8000/api/v1/chat/set-warm-mode/'
 
 // 메시지 저장소
 const messages = ref([]);
@@ -36,10 +36,16 @@ export const useMessages = () => {
     // text: 저장할 메시지 내용ㄴ
     const saveMessage = async (text) => {
       try {
+        const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+        if (!token) {
+          throw new Error('인증이 필요합니다.');
+        }
+
         const response = await fetch(API_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
             input_content: text
@@ -51,7 +57,7 @@ export const useMessages = () => {
         }
   
         const data = await response.json();
-        console.log(data);
+        console.log('보낸 메시지 응답:', data);
         return data;  // 전체 응답 데이터를 그대로 반환
       } catch (error) {
         console.error('메시지 저장 중 오류 발생:', error);
@@ -66,10 +72,16 @@ export const useMessages = () => {
     // getAllMessages: 모든 메시지를 가져오는 함수 추가
     const getAllMessages = async () => {
       try {
+        const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+        if (!token) {
+          throw new Error('인증이 필요합니다.');
+        }
+
         const response = await fetch(API_URL, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           }
         });
 
@@ -78,12 +90,29 @@ export const useMessages = () => {
         }
 
         const data = await response.json();
-        // id 포함하여 messages 업데이트
+        console.log('메시지 데이터:', data);
+
+        // 현재 사용자 정보 가져오기
+        const userResponse = await fetch('http://127.0.0.1:8000/api/auth/user/', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!userResponse.ok) {
+          throw new Error('사용자 정보 가져오기 실패');
+        }
+
+        const userData = await userResponse.json();
+        const currentUserId = userData.id;
+
+        // 메시지 매핑 - 현재 사용자의 메시지 여부로 isMine 설정
         messages.value = data.map(msg => ({
-          text: msg.output_content || msg.input_content,  // output_content가 있으면 사용, 없으면 input_content 사용
-          input_content: msg.input_content,  // 원본 메시지 저장
-          isMine: true,
-          isOriginal: !msg.output_content,  // output_content가 없으면 원본 메시지
+          text: msg.output_content || msg.input_content,
+          input_content: msg.input_content,
+          isMine: msg.user === currentUserId,  // 현재 사용자의 메시지인지 여부
+          isOriginal: !msg.output_content,
           createdAt: new Date(msg.created_at),
           id: msg.id
         }));
@@ -98,11 +127,16 @@ export const useMessages = () => {
     // 웜모드 상태 가져오기
     const getWarmMode = async () => {
       try {
-        // 서버에서 웜모드 상태를 가져옴
+        const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+        if (!token) {
+          throw new Error('인증이 필요합니다.');
+        }
+
         const response = await fetch(WARM_MODE_URL, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           }
         });
         
@@ -122,12 +156,17 @@ export const useMessages = () => {
     // 웜모드 토글
     const toggleWarmMode = async () => {
       try {
+        const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+        if (!token) {
+          throw new Error('인증이 필요합니다.');
+        }
+
         state.isLoading = true;
-        // 서버에 웜모드 상태 전송
         const response = await fetch(WARM_MODE_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
             warm_mode: !state.isWarmMode

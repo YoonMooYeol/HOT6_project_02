@@ -115,11 +115,18 @@ const selectOption = async (option, index) => {
     console.log('선택된 인덱스:', index);
     console.log('메시지 ID:', state.currentMessageId);
 
+    // 토큰 가져오기
+    const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+    if (!token) {
+      throw new Error('인증이 필요합니다.');
+    }
+
     // API 호출
     const response = await fetch(`http://127.0.0.1:8000/api/v1/chat/select-translation/${state.currentMessageId}/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`  // 토큰 추가
       },
       body: JSON.stringify({
         selected_index: index

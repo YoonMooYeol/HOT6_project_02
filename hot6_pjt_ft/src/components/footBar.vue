@@ -51,17 +51,18 @@ const handleSend = async () => {
     // 사용자 메시지 추가
     messages.value.push({
       text: data.input_content,
-      input_content: data.input_content,  // 원본 메시지 저장
+      input_content: data.input_content,
       isMine: true,
-      isOriginal: true,  // 새로 입력한 메시지는 원본
+      isOriginal: true,
       createdAt: new Date(data.created_at),
       id: data.id
     });
 
-    if (data.translated_content) {
-      const options = data.translated_content.split('\n').map(opt => opt.replace(/"/g, ''));
-      emit('showOptions', options, data.id);
+    // translated_content가 있고 배열인 경우에만 옵션 표시
+    if (data.translated_content && Array.isArray(data.translated_content)) {
+      emit('showOptions', data.translated_content, data.id);
     }
+    
     newMessage.value = '';
   } catch (error) {
     console.error('Error sending message:', error);
