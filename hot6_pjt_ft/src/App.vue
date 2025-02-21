@@ -3,7 +3,18 @@
 </template>
 
 <script setup>
-// 기본 상태로 변경
+import { onMounted, onUnmounted } from "vue";
+import { useMessages } from "./store/message";
+
+const { startWarmModePolling, stopWarmModePolling } = useMessages();
+
+onMounted(() => {
+  startWarmModePolling();
+});
+
+onUnmounted(() => {
+  stopWarmModePolling();
+});
 </script>
 
 <style>

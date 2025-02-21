@@ -20,7 +20,7 @@ const state = reactive({
   isWarmMode: false,
   isLoading: false,
   isSending: false,
-  currentUserId: parseInt(localStorage.getItem('user_id')),
+  currentUserId: parseInt(localStorage.getItem('user_id')) || 0,
   userGender: localStorage.getItem('user_gender') // 성별 정보 추가
 });
 
@@ -69,8 +69,6 @@ export const useMessages = () => {
       // 두 사용자의 메시지를 합치기
       const allMessages = [...data2, ...data3];
       const userGender = state.userGender;
-      console.log(userGender);
-
       // 메시지 매핑 - 현재 사용자의 성별에 따라 isMine 설정
       messages.value = allMessages.map(msg => {
         const createdAt = new Date(msg.created_at);
@@ -96,34 +94,67 @@ export const useMessages = () => {
   
     // 웜모드 상태 가져오기
     const getWarmMode = async () => {
-      const response = await apiRequest(WARM_MODE_URL, { method: 'GET' });
-      if (!response.ok) {
-        throw new Error('웜모드 상태 조회 실패');
+      state.isLoading = true;
+      try {
+        const response = await apiRequest(WARM_MODE_URL, { method: 'GET' });
+        if (!response.ok) {
+          throw new Error('GET warm mode 실패');
+        }
+        const data = await response.json();
+        console.log(data);
+        state.isWarmMode = data.warm_mode;
+        return state.isWarmMode;
+      } catch (error) {
+        console.error('GET warm mode 에러:', error);
+        throw error;
+      } finally {
+        state.isLoading = false;
       }
-      const data = await response.json();
-      state.isWarmMode = data.warm_mode;
-      return state.isWarmMode;
     };
   
     // 웜모드 토글
     const toggleWarmMode = async () => {
       state.isLoading = true;
       try {
+        const targetState = !state.isWarmMode;
         const response = await apiRequest(WARM_MODE_URL, {
           method: 'POST',
-          body: JSON.stringify({ warm_mode: !state.isWarmMode })
+          body: JSON.stringify({ warm_mode: targetState })
         });
         if (!response.ok) {
-          throw new Error('웜모드 토글 실패');
+          throw new Error('toggle warm mode 실패');
         }
         const data = await response.json();
         state.isWarmMode = data.warm_mode;
         return state.isWarmMode;
       } catch (error) {
-        console.error('웜모드 토글 에러:', error);
+        console.error('toggle warm mode 에러:', error);
         throw error;
       } finally {
         state.isLoading = false;
+      }
+    };
+  
+    // 웜모드 폴링 함수를 useMessages 내부로 이동하여 getWarmMode에 접근 가능하도록 함
+    let warmModeTimer = null;
+    const startWarmModePolling = () => {
+      if (warmModeTimer) clearTimeout(warmModeTimer);
+      const poll = async () => {
+        try {
+          await getWarmMode();
+        } catch (error) {
+          console.error("Warm mode polling error:", error);
+        } finally {
+          warmModeTimer = setTimeout(poll, 3000);
+        }
+      };
+      poll();
+    };
+
+    const stopWarmModePolling = () => {
+      if (warmModeTimer) {
+        clearTimeout(warmModeTimer);
+        warmModeTimer = null;
       }
     };
   
@@ -136,8 +167,9 @@ export const useMessages = () => {
       getAllMessages,  // 새로운 함수 추가
       getWarmMode,    // 웜모드 상태 가져오기 함수 추가
       toggleWarmMode,  // 웜모드 토글 함수 추가
-      state  // 상태 객체 추가
+      state,  // 상태 객체 추가
+      startWarmModePolling,
+      stopWarmModePolling
     }
   }
-  
   
