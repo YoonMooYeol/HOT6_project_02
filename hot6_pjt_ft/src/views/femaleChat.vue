@@ -222,7 +222,7 @@ const updateWarmMode = (newState) => {
 }
 
 .mine .chat-bubble {
-  background-color: #ffebf0;
+  background-color: #ffffff;
 }
 
 .other .chat-bubble {
