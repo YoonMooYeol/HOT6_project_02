@@ -7,7 +7,7 @@
         <navBar />
   
         <!-- 실제 채팅 메시지들이 표시되는 영역 -->
-        <div class="chat-content">
+        <div class="chat-content" ref="chatContent">
           <!-- 메시지가 없을 때 표시되는 안내 문구 -->
           <p v-if="messages.length === 0" class="empty-message">메시지가 없습니다.</p>
   
@@ -65,40 +65,35 @@
   const router = useRouter();
   
   const { messages, getAllMessages, state } = useMessages();
+  const chatContent = ref(null);
   const options = ref([]);
   
   // 메시지를 생성 시간순으로 정렬
   const sortedMessages = computed(() => {
     return [...messages.value]
       .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
-      .map(msg => ({
-        ...msg,
-        isMine: msg.user === state.currentUserId  // 내가 쓴 메시지면 오른쪽
-      }));
+      .map((msg) => ({ ...msg, isMine: msg.user === state.currentUserId }));
   });
   
-  // 메시지 로드 함수
+  const scrollToBottom = () => {
+    nextTick(() => {
+      if (chatContent.value) {
+        chatContent.value.scrollTop = chatContent.value.scrollHeight;
+      }
+    });
+  };
+  
   const loadMessages = async () => {
     try {
       await getAllMessages();
-      const chatContent = document.querySelector('.chat-content');
-      if (chatContent) {
-        chatContent.scrollTop = chatContent.scrollHeight;
-      }
+      scrollToBottom();
     } catch (error) {
       console.error('메시지 로드 실패:', error);
     }
   };
   
   // 메시지 변경 감지
-  watch(messages, () => {
-    const chatContent = document.querySelector('.chat-content');
-    if (chatContent) {
-      nextTick(() => {
-        chatContent.scrollTop = chatContent.scrollHeight;
-      });
-    }
-  }, { deep: true });
+  watch(messages, scrollToBottom, { deep: true });
   
   onMounted(() => {
     // 로그인 여부 체크: 토큰이 없으면 로그인 페이지로 이동
@@ -108,11 +103,7 @@
       return;
     }
     loadMessages();
-  });
-  
-  // 새로고침 이벤트 리스너
-  window.addEventListener('focus', () => {
-    loadMessages();
+    window.addEventListener('focus', loadMessages);
   });
   
   const showOptions = (newOptions, messageId) => {
@@ -165,7 +156,7 @@
   };
   
   const updateWarmMode = (newState) => {
-    console.log('Updating warm mode:', newState);  // 디버깅용
+    state.isWarmMode = newState;
   };
   </script>
   

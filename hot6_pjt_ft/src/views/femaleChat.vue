@@ -7,7 +7,7 @@
       <navBar />
 
       <!-- 실제 채팅 메시지들이 표시되는 영역 -->
-      <div class="chat-content">
+      <div class="chat-content" ref="chatContent">
         <!-- 메시지가 없을 때 표시되는 안내 문구 -->
         <p v-if="messages.length === 0" class="empty-message">메시지가 없습니다.</p>
 
@@ -71,6 +71,7 @@ import { useMessages } from "../store/message";
 const router = useRouter();
 
 const { messages, getAllMessages, state } = useMessages();
+const chatContent = ref(null);
 const options = ref([]);
 
 // 메시지를 생성 시간순으로 정렬하고 isMine 속성 설정
@@ -83,28 +84,26 @@ const sortedMessages = computed(() => {
     }));
 });
 
+const scrollToBottom = () => {
+  nextTick(() => {
+    if (chatContent.value) {
+      chatContent.value.scrollTop = chatContent.value.scrollHeight;
+    }
+  });
+};
+
 // 메시지 로드 함수
 const loadMessages = async () => {
   try {
     await getAllMessages();
-    const chatContent = document.querySelector('.chat-content');
-    if (chatContent) {
-      chatContent.scrollTop = chatContent.scrollHeight;
-    }
+    scrollToBottom();
   } catch (error) {
     console.error('메시지 로드 실패:', error);
   }
 };
 
 // 메시지 변경 감지
-watch(messages, () => {
-  const chatContent = document.querySelector('.chat-content');
-  if (chatContent) {
-    nextTick(() => {
-      chatContent.scrollTop = chatContent.scrollHeight;
-    });
-  }
-}, { deep: true });
+watch(messages, scrollToBottom, { deep: true });
 
 onMounted(() => {
   // 로그인 여부 확인 (토큰이 없으면 로그인 화면으로 이동)
@@ -174,7 +173,7 @@ const selectOption = async (option, index) => {
 };
 
 const updateWarmMode = (newState) => {
-  console.log('Updating warm mode:', newState);  // 디버깅용
+  state.isWarmMode = newState;
 };
 </script>
 

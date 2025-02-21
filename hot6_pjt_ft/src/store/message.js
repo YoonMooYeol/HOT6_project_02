@@ -1,4 +1,5 @@
 import { ref, reactive } from 'vue'
+import { apiRequest } from './apiClient';
 
 // 메시지 목록을 갱신하는 주기를 밀리초 단위로 설정
 // 500ms = 0.5초마다 메시지 목록을 새로고침
@@ -38,34 +39,15 @@ export const useMessages = () => {
     // saveMessage: 새 메시지를 저장하는 함수
     // text: 저장할 메시지 내용ㄴ
     const saveMessage = async (text) => {
-      try {
-        const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
-        if (!token) {
-          throw new Error('인증이 필요합니다.');
-        }
-
-        const response = await fetch(API_URL + '/', {  // POST 요청은 json-drf 엔드포인트 사용
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            input_content: text
-          })
-        });
-  
-        if (!response.ok) {
-          throw new Error('API 요청 실패');
-        }
-  
-        const data = await response.json();
-        console.log('보낸 메시지 응답:', data);
-        return data;  // 전체 응답 데이터를 그대로 반환
-      } catch (error) {
-        console.error('메시지 저장 중 오류 발생:', error);
-        throw error;
+      const response = await apiRequest(API_URL + '/', {
+        method: 'POST',
+        body: JSON.stringify({ input_content: text })
+      });
+      if (!response.ok) {
+        throw new Error('메시지 저장 실패');
       }
+      const data = await response.json();
+      return data;
     }
   
     const clearMessages = () => {
@@ -74,127 +56,74 @@ export const useMessages = () => {
   
     // getAllMessages: 모든 메시지를 가져오는 함수 추가
     const getAllMessages = async () => {
-      try {
-        const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
-        const userGender = localStorage.getItem('user_gender');
-        
-        if (!token) {
-          throw new Error('인증이 필요합니다.');
-        }
+      const response2 = await apiRequest(`${MESSAGES_URL}/2/`, { method: 'GET' });
+      const response3 = await apiRequest(`${MESSAGES_URL}/3/`, { method: 'GET' });
 
-        // 두 사용자(2, 3)의 메시지를 모두 가져오기
-        const [response2, response3] = await Promise.all([
-          fetch(`${MESSAGES_URL}/2/`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            }
-          }),
-          fetch(`${MESSAGES_URL}/3/`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            }
-          })
-        ]);
+      if (!response2.ok || !response3.ok) {
+        throw new Error('메시지 조회 실패');
+      }
 
-        if (!response2.ok || !response3.ok) {
-          throw new Error('API 요청 실패');
-        }
+      const data2 = await response2.json();
+      const data3 = await response3.json();
+      
+      // 두 사용자의 메시지를 합치기
+      const allMessages = [...data2, ...data3];
+      const userGender = state.userGender;
+      console.log(userGender);
 
-        const data2 = await response2.json();
-        const data3 = await response3.json();
-        
-        // 두 사용자의 메시지를 합치기
-        const allMessages = [...data2, ...data3];
-        console.log('모든 메시지 데이터:', allMessages);
-
-        // 메시지 매핑 - 현재 사용자의 성별에 따라 isMine 설정
-        messages.value = allMessages.map(msg => ({
+      // 메시지 매핑 - 현재 사용자의 성별에 따라 isMine 설정
+      messages.value = allMessages.map(msg => {
+        const createdAt = new Date(msg.created_at);
+        const isMine = userGender === 'F'
+          ? parseInt(msg.user) === 2 // 여성 채팅방: user_id가 2면 내 메시지
+          : parseInt(msg.user) === 3; // 남성 채팅방: user_id가 3이면 내 메시지
+        return {
           text: msg.output_content || msg.input_content,
           input_content: msg.input_content,
-          isMine: userGender === 'F' ? 
-            parseInt(msg.user) === 2 :  // 여성 채팅방: user_id가 2면 오른쪽
-            parseInt(msg.user) === 3,   // 남성 채팅방: user_id가 3이면 오른쪽
+          isMine,
           isOriginal: !msg.output_content,
-          createdAt: new Date(msg.created_at),
+          createdAt,
           id: msg.id,
           user: msg.user
-        }));
-        
-        // 시간순으로 정렬
-        messages.value.sort((a, b) => a.createdAt - b.createdAt);
-        
-        return allMessages;
-      } catch (error) {
-        console.error('메시지 조회 중 오류 발생:', error);
-        throw error;
-      }
+        };
+      });
+      
+      // 시간순으로 정렬
+      messages.value.sort((a, b) => a.createdAt - b.createdAt);
+      
+      return allMessages;
     };
   
     // 웜모드 상태 가져오기
     const getWarmMode = async () => {
-      try {
-        const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
-        if (!token) {
-          throw new Error('인증이 필요합니다.');
-        }
-
-        const response = await fetch(WARM_MODE_URL, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error('웜모드 상태 가져오기 실패');
-        }
-        
-        const data = await response.json();
-        state.isWarmMode = data.warm_mode;
-        return state.isWarmMode;
-      } catch (error) {
-        console.error('Error getting warm mode:', error);
-        return false;
+      const response = await apiRequest(WARM_MODE_URL, { method: 'GET' });
+      if (!response.ok) {
+        throw new Error('웜모드 상태 조회 실패');
       }
+      const data = await response.json();
+      state.isWarmMode = data.warm_mode;
+      return state.isWarmMode;
     };
   
     // 웜모드 토글
     const toggleWarmMode = async () => {
+      state.isLoading = true;
       try {
-        const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
-        if (!token) {
-          throw new Error('인증이 필요합니다.');
-        }
-
-        state.isLoading = true;
-        const response = await fetch(WARM_MODE_URL, {
+        const response = await apiRequest(WARM_MODE_URL, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            warm_mode: !state.isWarmMode
-          })
+          body: JSON.stringify({ warm_mode: !state.isWarmMode })
         });
-        
         if (!response.ok) {
-          throw new Error('웜모드 상태 변경 실패');
+          throw new Error('웜모드 토글 실패');
         }
-        
         const data = await response.json();
         state.isWarmMode = data.warm_mode;
-        state.isLoading = false;
         return state.isWarmMode;
       } catch (error) {
-        console.error('Error toggling warm mode:', error);
-        state.isLoading = false;
+        console.error('웜모드 토글 에러:', error);
         throw error;
+      } finally {
+        state.isLoading = false;
       }
     };
   
