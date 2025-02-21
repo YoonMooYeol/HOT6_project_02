@@ -49,7 +49,7 @@ import { useRouter } from "vue-router";
 import NavBar from "../components/navBar.vue";
 import FootBar from "../components/footBar.vue";
 import { useMessages } from "../store/message";
-import { state as warmState } from "../store/warmMode";
+import { state as warmState, startWarmModePolling, stopWarmModePolling } from "../store/warmMode";
 
 const router = useRouter();
 const { messages, getAllMessages, state: messageState } = useMessages();
@@ -98,10 +98,14 @@ onMounted(() => {
 
   loadMessages();
   window.addEventListener("focus", loadMessages);
+  // 채팅방에서만 웜모드 폴링 실행
+  startWarmModePolling();
 });
 
 onUnmounted(() => {
   window.removeEventListener("focus", loadMessages);
+  // 폴링 중지
+  stopWarmModePolling();
 });
 
 const showOptions = (newOptions, messageId) => {
