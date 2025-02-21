@@ -154,7 +154,7 @@ const updateWarmMode = (newState) => {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-color: #d8faff;
+  background-color: #bdbdbd;
 }
 
 .chat-container {
