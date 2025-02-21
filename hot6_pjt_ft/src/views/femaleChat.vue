@@ -181,7 +181,7 @@ const updateWarmMode = (newState) => {
   border-radius: 15px;
   margin-right: 30px;
   overflow: hidden;
-  background-color: #FFFFFF;
+  background-color: #e2e2e2;
   transition: background-color 0.3s ease;
 }
 
