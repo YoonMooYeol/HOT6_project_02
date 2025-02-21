@@ -279,4 +279,31 @@ const updateWarmMode = (newState) => {
   font-size: 1em;
   color: #000;
 }
+
+/* -- Variants: female / male 채팅에 따라 오버라이드 -- */
+::v-deep(.female-chat) .chat-container {
+  background-color: #F5F5F5;
+}
+::v-deep(.female-chat) .chat-container.warm {
+  background-color: #ffe2e2;
+}
+::v-deep(.female-chat) {
+  --mine-bubble-color: #ffebf0;
+}
+::v-deep(.female-chat) .option-btn {
+  background: #BE7272;
+}
+::v-deep(.female-chat) .option-btn:hover {
+  background: #a64a4a;
+}
+
+::v-deep(.male-chat) .chat-container {
+  background-color: #F5F5F5;
+}
+::v-deep(.male-chat) .chat-container.warm {
+  background-color: #e2f6ff;
+}
+::v-deep(.male-chat) {
+  --mine-bubble-color: #c2e2ff;
+}
 </style> 
