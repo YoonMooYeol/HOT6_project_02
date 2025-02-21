@@ -175,7 +175,7 @@
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #d8faff;
+    background-color: #D9D9D9;
   }
   
   .chat-container {
@@ -187,13 +187,13 @@
     border-radius: 15px;
     margin-right: 30px;
     overflow: hidden;
-    background-color: #FFFFFF;
+    background-color: #F5F5F5;
     transition: background-color 0.3s ease;
   }
   
   /* 웜모드일 때 연한 파랑 배경 */
   .chat-container.warm {
-    background-color: #E6F3FF;  /* 연한 파랑색 */
+    background-color: #e2f6ff;  /* 연한 파랑색 */
   }
   
   .chat-content {
@@ -230,7 +230,7 @@
   
   /* 내 메시지(오른쪽) 말풍선 색상도 변경 */
   .mine .chat-bubble {
-    background-color: #CCE6FF;  /* 조금 더 진한 연한 파랑 */
+    background-color: #c2e2ff;  /* 조금 더 진한 연한 파랑 */
   }
   
   .other .chat-bubble {
@@ -284,7 +284,7 @@
     padding: 10px;
     width: 80%;
     border: none;
-    background: #ff69b4;
+    background: #88CFEE;
     color: white;
     border-radius: 20px;
     cursor: pointer;
@@ -292,7 +292,7 @@
   }
   
   .option-btn:hover {
-    background: #ff1493;
+    background: #31A2D3;
   }
   
   .input-content {

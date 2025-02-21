@@ -184,7 +184,7 @@ const updateWarmMode = (newState) => {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-color: #d8faff;
+  background-color: #D9D9D9;
 }
 
 .chat-container {
@@ -196,12 +196,12 @@ const updateWarmMode = (newState) => {
   border-radius: 15px;
   margin-right: 30px;
   overflow: hidden;
-  background-color: #FFFFFF;
+  background-color: #F5F5F5;
   transition: background-color 0.3s ease;
 }
 
 .chat-container.warm {
-  background-color: #FFE0E0;
+  background-color: #ffe2e2;
 }
 
 .chat-content {
@@ -237,7 +237,7 @@ const updateWarmMode = (newState) => {
 }
 
 .mine .chat-bubble {
-  background-color: #ffebf0;
+  background-color: #ffbece;
 }
 
 .other .chat-bubble {
@@ -291,7 +291,7 @@ const updateWarmMode = (newState) => {
   padding: 10px;
   width: 80%;
   border: none;
-  background: #ff69b4;
+  background: #BE7272;
   color: white;
   border-radius: 20px;
   cursor: pointer;
@@ -299,7 +299,7 @@ const updateWarmMode = (newState) => {
 }
 
 .option-btn:hover {
-  background: #ff1493;
+  background: #a64a4a;
 }
 
 .input-content {
