@@ -175,7 +175,7 @@ const updateWarmMode = (newState) => {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-color: #d8faff;
+  background-color: #d1d1d1;
 }
 
 .chat-container {
@@ -279,7 +279,7 @@ const updateWarmMode = (newState) => {
   padding: 10px;
   width: 80%;
   border: none;
-  background: #ff69b4;
+  background: #d58080;
   color: white;
   border-radius: 20px;
   cursor: pointer;
@@ -287,7 +287,7 @@ const updateWarmMode = (newState) => {
 }
 
 .option-btn:hover {
-  background: #ff1493;
+  background: #ce5d5d;
 }
 
 .input-content {
@@ -304,7 +304,7 @@ const updateWarmMode = (newState) => {
 /* -- Variants: female / male 채팅에 따라 오버라이드 -- */
 ::v-deep(.female-chat) .chat-container {
   background-color: #F5F5F5;
-}
+  }
 ::v-deep(.female-chat) .chat-container.warm {
   background-color: #ffe2e2;
 }
@@ -312,11 +312,12 @@ const updateWarmMode = (newState) => {
   --mine-bubble-color: #ffebf0;
 }
 ::v-deep(.female-chat) .option-btn {
-  background: #BE7272;
+background: #d58080;
 }
 ::v-deep(.female-chat) .option-btn:hover {
-  background: #a64a4a;
+  background: #ce5d5d;
 }
+
 
 ::v-deep(.male-chat) .chat-container {
   background-color: #F5F5F5;
@@ -325,7 +326,13 @@ const updateWarmMode = (newState) => {
   background-color: #e2f6ff;
 }
 ::v-deep(.male-chat) {
-  --mine-bubble-color: #c2e2ff;
+   --mine-bubble-color: #b1d6f8;
+}
+::v-deep(.female-chat) .option-btn {
+  background: #6096d3;
+}
+::v-deep(.female-chat) .option-btn:hover {
+  background: #3c7ec9;
 }
 
 </style> 
