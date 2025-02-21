@@ -1,5 +1,5 @@
 <template>
-  <div class="all-users">
+  <div class="view-container">
     <h1>모든 사용자 목록</h1>
     <div v-if="loading" class="loading">Loading...</div>
     <div v-else-if="error" class="error">{{ error.message }}</div>
@@ -46,7 +46,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.all-users {
+.view-container {
   max-width: 600px;
   margin: 0 auto;
   padding: 20px;

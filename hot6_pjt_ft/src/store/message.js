@@ -19,6 +19,30 @@ const state = reactive({
   userGender: localStorage.getItem('user_gender')
 });
 
+// 로그인한 사용자 정보를 저장하는 reactive 변수
+const currentUser = ref(null);
+
+// 로그인한 사용자 정보를 가져오는 함수
+const getCurrentUser = async () => {
+  try {
+    const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+    if (!token) throw new Error("No access token available");
+    const response = await apiRequest('http://127.0.0.1:8000/api/auth/user-detail', { method: 'GET' });
+    if (!response.ok) {
+      throw new Error("Failed to fetch user detail");
+    }
+    const data = await response.json();
+    currentUser.value = data;
+    // 하드코딩에 따른 테스트용 업데이트 (예: id 2는 여자, id 3은 남자)
+    state.currentUserId = data.id;
+    state.userGender = data.gender;
+    return data;
+  } catch (error) {
+    console.error("Error in getCurrentUser:", error);
+    throw error;
+  }
+};
+
 // useMessages: 메시지 관리를 위한 커스텀 훅(hook) 함수
 // sender: 메시지 발신자 구분을 위한 매개변수 ('male' 또는 'female')
 export const useMessages = () => {
@@ -94,7 +118,9 @@ export const useMessages = () => {
       saveMessage,  // 새 메시지 저장 함수
       clearMessages,  // 메시지 삭제 함수
       getAllMessages,  // 새로운 함수 추가
-      state
+      state,
+      getCurrentUser,
+      currentUser
     }
   }
   

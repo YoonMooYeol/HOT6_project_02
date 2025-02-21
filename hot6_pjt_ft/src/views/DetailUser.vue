@@ -1,5 +1,5 @@
 <template>
-  <div class="detail-user">
+  <div class="view-container">
     <h1>내 정보</h1>
     <div v-if="loading" class="loading">Loading...</div>
     <div v-else-if="error" class="error">Error: {{ error.message }}</div>
@@ -46,14 +46,14 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.detail-user {
+.view-container {
   max-width: 600px;
   margin: 0 auto;
   padding: 20px;
   font-family: Arial, sans-serif;
 }
 
-.detail-user h1 {
+h1 {
   text-align: center;
   margin-bottom: 20px;
 }

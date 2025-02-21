@@ -52,7 +52,7 @@ import { useMessages } from "../store/message";
 import { state as warmState, startWarmModePolling, stopWarmModePolling } from "../store/warmMode";
 
 const router = useRouter();
-const { messages, getAllMessages, state: messageState } = useMessages();
+const { messages, getAllMessages, state: messageState, getCurrentUser } = useMessages();
 
 const chatContent = ref(null);
 const options = ref([]);
@@ -93,6 +93,18 @@ onMounted(() => {
     router.push("/login");
     return;
   }
+  // 로그인한 사용자 정보 API를 호출하여 성별 확인 후 올바른 채팅창으로 리다이렉트
+  getCurrentUser().then((userData) => {
+    // 하드코딩된 테스트: 여자는 femaleChat, 남자는 maleChat으로 분기
+    if (userData.gender === 'F' && router.currentRoute.value.name !== 'femaleChat') {
+      router.replace({ name: "femaleChat" });
+    } else if (userData.gender === 'M' && router.currentRoute.value.name !== 'maleChat') {
+      router.replace({ name: "maleChat" });
+    }
+  }).catch(err => {
+    console.error("Failed to get user details", err);
+  });
+  
   // 채팅방 시작 시 웜모드를 false로 초기화
   warmState.isWarmMode = false;
 
