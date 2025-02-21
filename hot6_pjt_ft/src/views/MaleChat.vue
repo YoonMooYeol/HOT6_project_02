@@ -57,9 +57,12 @@
   
   <script setup>
   import { ref, onMounted, computed, watch, nextTick } from "vue";
+  import { useRouter } from 'vue-router';
   import NavBar from "../components/NavBar.vue";
   import FootBar from "../components/FootBar.vue";
   import { useMessages } from "../store/message";
+  
+  const router = useRouter();
   
   const { messages, getAllMessages, state } = useMessages();
   const options = ref([]);
@@ -98,6 +101,12 @@
   }, { deep: true });
   
   onMounted(() => {
+    // 로그인 여부 체크: 토큰이 없으면 로그인 페이지로 이동
+    const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
     loadMessages();
   });
   
@@ -117,13 +126,11 @@
       console.log('선택된 옵션:', option);
       console.log('선택된 인덱스:', index);
       console.log('메시지 ID:', state.currentMessageId);
-  
       // 토큰 가져오기
       const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
       if (!token) {
         throw new Error('인증이 필요합니다.');
       }
-  
       // API 호출
       const response = await fetch(`http://127.0.0.1:8000/api/v1/chat/select-translation/${state.currentMessageId}/`, {
         method: 'POST',
@@ -135,26 +142,22 @@
           selected_index: index
         })
       });
-  
       if (!response.ok) {
         throw new Error('API 호출 실패');
       }
-  
       const responseData = await response.json();
       console.log('서버 응답:', responseData);
-      
-      // 서버 응답 데이터를 메시지 목록에 추가
+      // 서버 응답 데이터를 메시지 목록에 추가 (번역 업데이트)
       messages.value = messages.value.map(msg => {
         if (msg.id === responseData.id) {
           return {
             ...msg,
-            text: responseData.output_content,  // 번역된 메시지로 업데이트
+            text: responseData.output_content,
             isOriginal: false
           };
         }
         return msg;
       });
-      
       state.isPopupVisible = false;
     } catch (error) {
       console.error('옵션 선택 처리 실패:', error);

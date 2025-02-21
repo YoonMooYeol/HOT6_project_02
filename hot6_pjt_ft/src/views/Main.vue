@@ -5,6 +5,9 @@
         <router-link to="/female-chat" class="chat-button female">
           여성 채팅
         </router-link>
+        <router-link to="/male-chat" class="chat-button male">
+          남성 채팅
+        </router-link>
         <!-- 추후 다른 채팅방 추가 가능 -->
       </div>
     </div>
