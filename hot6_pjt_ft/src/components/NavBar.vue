@@ -1,42 +1,96 @@
 <!-- src/components/navBar.vue -->
 <template>
-  <div class="nav-bar">
-    <span @click="goBack">◀</span>
-    <h1>🩵</h1>
-    <span>☰</span>
-  </div>
+  <nav class="nav-bar">
+    <div class="nav-top">
+      <div class="logo">
+        <router-link to="/">{{ isChatView ? '🩵' : 'MyApp' }}</router-link>
+      </div>
+
+      <button class="hamburger" @click="toggleMenu">
+        ☰
+      </button>
+    </div>
+    <div class="menu" v-if="menuVisible">
+      <ul>
+        <li><router-link to="/">메인</router-link></li>
+        <li><router-link to="/female-chat">여자 채팅</router-link></li>
+        <li><router-link to="/male-chat">남자 채팅</router-link></li>
+        <li><router-link to="/all-user">모든 사용자</router-link></li>
+        <li><router-link to="/detail-user">내 정보</router-link></li>
+        <li><a href="#" @click.prevent="logout">로그아웃</a></li>
+      </ul>
+    </div>
+  </nav>
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router';
+import { ref, computed } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useMessages } from "../store/message";
 
 const { state } = useMessages();
 
+const menuVisible = ref(false);
 const router = useRouter();
+const route = useRoute();
+const isChatView = computed(() => {
+  return ['femaleChat', 'maleChat'].includes(route.name);
+});
 
-const goBack = () => {
-  router.go(-1);  // 뒤로가기
+const toggleMenu = () => {
+  menuVisible.value = !menuVisible.value;
+};
+
+const logout = () => {
+  localStorage.removeItem('access_token');
+  sessionStorage.removeItem('access_token');
+  // 필요한 경우 다른 사용자 정보도 삭제
+  router.push('/login');
 };
 </script>
 
 <style scoped>
 .nav-bar {
+  background-color: #ffffff;
+  padding: 10px 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.nav-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px;
-  background-color: #FFFFFF;
-  border-bottom: 1px solid #eee;
 }
 
-.nav-bar h1 {
-  margin: 0;
-  font-size: 1.5em;
+.logo a {
+  font-size: 20px;
+  font-weight: bold;
+  text-decoration: none;
+  color: #333;
 }
 
-.nav-bar span {
+.hamburger {
+  background: none;
+  border: none;
+  font-size: 24px;
   cursor: pointer;
-  padding: 5px 10px;
+}
+
+.menu {
+  margin-top: 10px;
+}
+
+.menu ul {
+  list-style: none;
+  padding: 0;
+}
+
+.menu li {
+  padding: 8px 0;
+}
+
+.menu li a {
+  text-decoration: none;
+  color: #333;
 }
 </style>
