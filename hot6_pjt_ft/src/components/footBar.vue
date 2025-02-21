@@ -79,7 +79,7 @@ const handleSend = async () => {
   padding: 12px;
   background-color: #FFFFFF;
   width: 100%;
-  max-width: 390px;
+  max-width: 370px;
   border-radius: 0px;
 }
 

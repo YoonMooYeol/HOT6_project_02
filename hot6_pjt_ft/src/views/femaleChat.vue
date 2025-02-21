@@ -181,7 +181,7 @@ const updateWarmMode = (newState) => {
   border-radius: 15px;
   margin-right: 30px;
   overflow: hidden;
-  background-color: #e2e2e2;
+  background-color: #FFFFFF;
   transition: background-color 0.3s ease;
 }
 
@@ -222,7 +222,7 @@ const updateWarmMode = (newState) => {
 }
 
 .mine .chat-bubble {
-  background-color: #ffffff;
+  background-color: #ffebf0;
 }
 
 .other .chat-bubble {
