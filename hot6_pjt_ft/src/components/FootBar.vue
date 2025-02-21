@@ -90,7 +90,7 @@ const handleSend = async () => {
   padding: 12px;
   background-color: #ffffff;
   width: 100%;
-  max-width: 370px;
+  max-width: 390px;
   border-radius: 0px;
 }
 .heart-button {
