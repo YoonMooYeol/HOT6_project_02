@@ -4,9 +4,7 @@
 
 <script setup>
 import { onMounted, onUnmounted } from "vue";
-import { useMessages } from "./store/message";
-
-const { startWarmModePolling, stopWarmModePolling } = useMessages();
+import { startWarmModePolling, stopWarmModePolling } from "./store/warmMode";
 
 onMounted(() => {
   startWarmModePolling();

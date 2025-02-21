@@ -1,6 +1,6 @@
 <template>
   <div class="app">
-    <div class="chat-container" :class="{ warm: state.isWarmMode }">
+    <div class="chat-container" :class="{ warm: warmState.isWarmMode }">
       <NavBar />
       <div class="chat-content" ref="chatContent">
         <p v-if="messages.length === 0" class="empty-message">메시지가 없습니다.</p>
@@ -12,7 +12,7 @@
           <div class="chat-bubble" :class="{ 'mine-bubble': message.isMine }">
             <!-- 내 메시지(오른쪽) && 웜모드일 경우 원본 메시지 표시 -->
             <div
-              v-if="message.isMine && message.input_content && !message.isOriginal && state.isWarmMode"
+              v-if="message.isMine && message.input_content && !message.isOriginal && warmState.isWarmMode"
               class="input-content"
             >
               {{ message.input_content }}
@@ -22,9 +22,9 @@
         </div>
       </div>
 
-      <div v-if="state.isPopupVisible" class="popup">
+      <div v-if="messageState.isPopupVisible" class="popup">
         <div class="popup-content">
-          <button class="close-btn" @click="state.isPopupVisible = false">×</button>
+          <button class="close-btn" @click="messageState.isPopupVisible = false">×</button>
           <div class="options">
             <button
               v-for="(option, idx) in options"
@@ -44,14 +44,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch, nextTick } from "vue";
+import { ref, onMounted, computed, watch, nextTick, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import NavBar from "../components/navBar.vue";
 import FootBar from "../components/footBar.vue";
 import { useMessages } from "../store/message";
+import { state as warmState } from "../store/warmMode";
 
 const router = useRouter();
-const { messages, getAllMessages, state } = useMessages();
+const { messages, getAllMessages, state: messageState } = useMessages();
 
 const chatContent = ref(null);
 const options = ref([]);
@@ -62,7 +63,7 @@ const sortedMessages = computed(() => {
     .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
     .map((msg) => ({
       ...msg,
-      isMine: msg.user === state.currentUserId
+      isMine: msg.user === messageState.currentUserId
     }));
 });
 
@@ -92,32 +93,36 @@ onMounted(() => {
     router.push("/login");
     return;
   }
-  // 채팅방 시작 시 무조건 웜모드를 false로 초기화
-  state.isWarmMode = false;
+  // 채팅방 시작 시 웜모드를 false로 초기화
+  warmState.isWarmMode = false;
 
   loadMessages();
   window.addEventListener("focus", loadMessages);
 });
 
+onUnmounted(() => {
+  window.removeEventListener("focus", loadMessages);
+});
+
 const showOptions = (newOptions, messageId) => {
   options.value = newOptions;
-  state.currentMessageId = messageId;
-  state.isPopupVisible = true;
+  messageState.currentMessageId = messageId;
+  messageState.isPopupVisible = true;
 };
 
 const selectOption = async (option, index) => {
   try {
     console.log("선택된 옵션:", option);
     console.log("선택된 인덱스:", index);
-    console.log("메시지 ID:", state.currentMessageId);
-    console.log("현재 사용자 ID:", state.currentUserId);
+    console.log("메시지 ID:", messageState.currentMessageId);
+    console.log("현재 사용자 ID:", messageState.currentUserId);
     const token =
       localStorage.getItem("access_token") || sessionStorage.getItem("access_token");
     if (!token) {
       throw new Error("인증이 필요합니다.");
     }
     const response = await fetch(
-      `http://127.0.0.1:8000/api/v1/chat/select-translation/${state.currentMessageId}/`,
+      `http://127.0.0.1:8000/api/v1/chat/select-translation/${messageState.currentMessageId}/`,
       {
         method: "POST",
         headers: {
@@ -137,14 +142,14 @@ const selectOption = async (option, index) => {
         ? { ...msg, text: responseData.output_content, isOriginal: false }
         : msg
     );
-    state.isPopupVisible = false;
+    messageState.isPopupVisible = false;
   } catch (error) {
     console.error("옵션 선택 처리 실패:", error);
   }
 };
 
 const updateWarmMode = (newState) => {
-  state.isWarmMode = newState;
+  warmState.isWarmMode = newState;
 };
 </script>
 
@@ -306,4 +311,5 @@ const updateWarmMode = (newState) => {
 ::v-deep(.male-chat) {
   --mine-bubble-color: #c2e2ff;
 }
+
 </style> 

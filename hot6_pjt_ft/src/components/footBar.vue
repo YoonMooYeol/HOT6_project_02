@@ -2,17 +2,17 @@
   <div class="foot-bar">
     <button class="heart-button" 
       @click="toggleWarmMode">
-      {{ state.isWarmMode ? "♥︎" : "♡" }}
+      {{ warmState.isWarmMode ? "♥︎" : "♡" }}
     </button>
     <input 
       v-model="newMessage" 
       @keyup.enter="handleSend"
       placeholder="메시지 입력" 
-      :disabled="isSending || state.isPopupVisible"
+      :disabled="isSending || messageState.isPopupVisible"
     />
     <button class="send-button" 
       @click="handleSend"
-      :disabled="isSending || state.isPopupVisible">
+      :disabled="isSending || messageState.isPopupVisible">
       {{ isSending ? "..." : "➢" }}
     </button>
   </div>
@@ -21,9 +21,10 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
 import { useMessages } from "../store/message";
+import { toggleWarmMode, state as warmState } from "../store/warmMode";
 
 const emit = defineEmits(["updateWarmMode", "showOptions"]);
-const { messages, saveMessage, getWarmMode, toggleWarmMode, state } = useMessages();
+const { messages, saveMessage, state: messageState } = useMessages();
 const newMessage = ref("");
 const isSending = ref(false);
 
@@ -36,21 +37,22 @@ const checkWarmMode = async () => {
     // store의 getWarmMode 함수를 사용해 내부 state 업데이트
     await getWarmMode();
     // 업데이트된 상태를 부모 컴포넌트에 알림
-    emit("updateWarmMode", state.isWarmMode);
+    emit("updateWarmMode", warmState.isWarmMode);
   } catch (error) {
     console.error("Error checking warm mode:", error);
   }
 };
 
-// 글로벌 폴링(App.vue에서 시작)로 대체합니다.
-// onMounted(() => {
-//   // 컴포넌트 마운트 시 즉시 체크하고 재귀적 폴링 시작
-//   checkWarmMode();
-// });
-
-// onUnmounted(() => {
-//   // 로컬 타이머 제거 코드는 필요하지 않습니다.
-// });
+// 아래 사용하지 않는 글로벌 폴링 관련 주석은 제거합니다.
+// // 글로벌 폴링(App.vue에서 시작)로 대체합니다.
+// // onMounted(() => {
+// //   // 컴포넌트 마운트 시 즉시 체크하고 재귀적 폴링 시작
+// //   checkWarmMode();
+// // });
+// //
+// // onUnmounted(() => {
+// //   // 로컬 타이머 제거 코드는 필요하지 않습니다.
+// // });
 
 const handleSend = async () => {
   if (!newMessage.value.trim() || isSending.value) return;
@@ -62,7 +64,7 @@ const handleSend = async () => {
     messages.value.push({
       text: data.input_content,
       input_content: data.input_content,
-      isMine: parseInt(data.user) === state.currentUserId,
+      isMine: parseInt(data.user) === messageState.currentUserId,
       isOriginal: true,
       createdAt: new Date(data.created_at),
       id: data.id,
