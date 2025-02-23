@@ -50,6 +50,7 @@ import NavBar from "../components/navBar.vue";
 import FootBar from "../components/footBar.vue";
 import { useMessages } from "../store/message";
 import { state as warmState, startWarmModePolling, stopWarmModePolling } from "../store/warmMode";
+import { textToSpeech } from "../store/audio";
 
 const router = useRouter();
 const { messages, getAllMessages, state: messageState, getCurrentUser } = useMessages();
@@ -85,6 +86,20 @@ const loadMessages = async () => {
 };
 
 watch(messages, scrollToBottom, { deep: true });
+
+// 새로운 메시지가 추가될 때, 내가 보낸 메시지가 아니라면(왼쪽 메시지) 사용자 성별과 반대되는 목소리로 TTS 재생
+watch(messages, (newMessages, oldMessages) => {
+  // 초기 로드 시(oldMessages가 없거나 길이가 줄어들 경우 무시)
+  if (!oldMessages || newMessages.length <= oldMessages.length) return;
+  const lastMsg = newMessages[newMessages.length - 1];
+  // 좌측 메시지인 경우
+  if (!lastMsg.isMine) {
+    // 사용자 성별의 반대: "M"이면 "F", 그렇지 않으면 "M"
+    const oppositeGender = messageState.userGender && messageState.userGender.toUpperCase() === 'M' ? 'F' : 'M';
+    textToSpeech(lastMsg.text, oppositeGender)
+      .catch(error => console.error("TTS error on incoming left message:", error));
+  }
+}, { deep: true });
 
 onMounted(() => {
   const token =
@@ -161,6 +176,10 @@ const selectOption = async (option, index) => {
         : msg
     );
     messageState.isPopupVisible = false;
+    
+    if (warmState.isWarmMode) {
+      await textToSpeech(option, messageState.userGender);
+    }
   } catch (error) {
     console.error("옵션 선택 처리 실패:", error);
   }

@@ -15,6 +15,11 @@
       :disabled="isSending || messageState.isPopupVisible">
       {{ isSending ? "..." : "➢" }}
     </button>
+    <button class="speak-button" 
+      @click="speakMessage" 
+      :disabled="!newMessage">
+      말하기
+    </button>
   </div>
 </template>
 
@@ -22,12 +27,21 @@
 import { ref } from "vue";
 import { useMessages } from "../store/message";
 import { toggleWarmMode, state as warmState } from "../store/warmMode";
+import { textToSpeech } from "../store/audio";
 
 const emit = defineEmits(["updateWarmMode", "showOptions"]);
 const { messages, saveMessage, state: messageState } = useMessages();
 const newMessage = ref("");
 const isSending = ref(false);
 
+const speakMessage = async () => {
+  if (!newMessage.value.trim()) return;
+  try {
+    await textToSpeech(newMessage.value, messageState.userGender);
+  } catch (error) {
+    console.error("말하기 실패", error);
+  }
+};
 
 const handleSend = async () => {
   if (!newMessage.value.trim() || isSending.value) return;
@@ -101,6 +115,20 @@ input {
 }
 .send-button:hover {
   background-color: #979595;
+}
+.speak-button {
+  margin-left: 8px;
+  padding: 7px 9px;
+  border-radius: 30px;
+  border: none;
+  background-color: #d9ead3;
+  color: rgb(0, 0, 0);
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+.speak-button:hover {
+  background-color: #b6d7a8;
 }
 input:disabled {
   background-color: #f5f5f5;
