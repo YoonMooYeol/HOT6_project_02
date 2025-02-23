@@ -27,7 +27,6 @@
 import { ref } from "vue";
 import { useMessages } from "../store/message";
 import { toggleWarmMode, state as warmState } from "../store/warmMode";
-import { textToSpeech } from "../store/audio";
 
 const emit = defineEmits(["updateWarmMode", "showOptions"]);
 const { messages, saveMessage, state: messageState } = useMessages();

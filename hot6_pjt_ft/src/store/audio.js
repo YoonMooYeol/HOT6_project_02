@@ -21,7 +21,7 @@ export async function textToSpeech(text, user_gender) {
       throw new Error("TTS API Error: " + errorMessage);
     }
 
-    // 응답을 Blob으로 읽음. (서버가 오디오 데이터를 binary 형식으로 반환한다고 가정)
+    // 응답을 Blob으로 읽음. (서버가 오디오 데이터를 binary 형식으로 반환)
     const blob = await response.blob();
     // Blob을 기반으로 URL 생성
     const audioUrl = URL.createObjectURL(blob);

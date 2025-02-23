@@ -74,6 +74,10 @@ const sortedMessages = computed(() => {
     }));
 });
 
+/**
+ * @function scrollToBottom
+ * @description 채팅 내용을 맨 아래로 스크롤합니다.
+ */
 const scrollToBottom = () => {
   nextTick(() => {
     if (chatContent.value) {
@@ -82,6 +86,10 @@ const scrollToBottom = () => {
   });
 };
 
+/**
+ * @function loadMessages
+ * @description 메시지를 불러오고, 로드 후 채팅 내용을 맨 아래로 스크롤합니다.
+ */
 const loadMessages = async () => {
   try {
     await getAllMessages();
@@ -93,7 +101,7 @@ const loadMessages = async () => {
 
 watch(messages, scrollToBottom, { deep: true });
 
-// 새로운 메시지가 추가될 때, 내가 보낸 메시지가 아니라면(왼쪽 메시지) 사용자 성별과 반대되는 목소리로 TTS 재생
+// 새로운 메시지 감시 및 TTS 실행
 watch(messages, (newMessages, oldMessages) => {
   // 초기 로드 시(oldMessages가 없거나 길이가 줄어들 경우 무시)
   if (!oldMessages || newMessages.length <= oldMessages.length) return;
@@ -101,9 +109,11 @@ watch(messages, (newMessages, oldMessages) => {
   // 좌측 메시지인 경우 웜모드가 켜져있으면 웜모드 메시지 재생
   if (!lastMsg.isMine && warmState.isWarmMode && warmState.ttsEnabled) {
     // 사용자 성별의 반대: "M"이면 "F", 그렇지 않으면 "M"
-    const oppositeGender = messageState.userGender && messageState.userGender.toUpperCase() === 'M' ? 'F' : 'M';
-    textToSpeech(lastMsg.text, oppositeGender)
-      .catch(error => console.error("TTS error on incoming left message:", error));
+    const oppositeGender =
+      messageState.userGender && messageState.userGender.toUpperCase() === "M" ? "F" : "M";
+    textToSpeech(lastMsg.text, oppositeGender).catch((error) =>
+      console.error("TTS error on incoming left message:", error)
+    );
   }
 }, { deep: true });
 
@@ -115,17 +125,19 @@ onMounted(() => {
     return;
   }
   // 로그인한 사용자 정보 API를 호출하여 성별 확인 후 올바른 채팅창으로 리다이렉트
-  getCurrentUser().then((userData) => {
-    // 하드코딩된 테스트: 여자는 femaleChat, 남자는 maleChat으로 분기
-    if (userData.gender === 'F' && router.currentRoute.value.name !== 'femaleChat') {
-      router.replace({ name: "femaleChat" });
-    } else if (userData.gender === 'M' && router.currentRoute.value.name !== 'maleChat') {
-      router.replace({ name: "maleChat" });
-    }
-  }).catch(err => {
-    console.error("Failed to get user details", err);
-  });
-  
+  getCurrentUser()
+    .then((userData) => {
+      // 하드코딩된 테스트: 여자는 femaleChat, 남자는 maleChat으로 분기
+      if (userData.gender === "F" && router.currentRoute.value.name !== "femaleChat") {
+        router.replace({ name: "femaleChat" });
+      } else if (userData.gender === "M" && router.currentRoute.value.name !== "maleChat") {
+        router.replace({ name: "maleChat" });
+      }
+    })
+    .catch((err) => {
+      console.error("Failed to get user details", err);
+    });
+
   // 채팅방 시작 시 웜모드를 false로 초기화
   warmState.isWarmMode = false;
 
@@ -143,12 +155,20 @@ onUnmounted(() => {
   stopWarmModePolling();
 });
 
+/**
+ * @function showOptions
+ * @description 옵션 팝업을 띄우고, 선택 가능한 옵션들을 설정합니다.
+ */
 const showOptions = (newOptions, messageId) => {
   options.value = newOptions;
   messageState.currentMessageId = messageId;
   messageState.isPopupVisible = true;
 };
 
+/**
+ * @function selectOption
+ * @description 사용자가 선택한 옵션을 서버로 전송하고 응답을 반영합니다.
+ */
 const selectOption = async (option, index) => {
   try {
     console.log("선택된 옵션:", option);
@@ -182,7 +202,7 @@ const selectOption = async (option, index) => {
         : msg
     );
     messageState.isPopupVisible = false;
-    
+
     if (warmState.isWarmMode && warmState.ttsEnabled) {
       await textToSpeech(option, messageState.userGender);
     }
@@ -191,6 +211,10 @@ const selectOption = async (option, index) => {
   }
 };
 
+/**
+ * @function updateWarmMode
+ * @description 웜 모드 활성/비활성 상태를 업데이트합니다.
+ */
 const updateWarmMode = (newState) => {
   warmState.isWarmMode = newState;
 };
