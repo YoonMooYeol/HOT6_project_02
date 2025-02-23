@@ -10,14 +10,20 @@
           :class="['message-container', message.isMine ? 'mine' : 'other']"
         >
           <div class="chat-bubble" :class="{ 'mine-bubble': message.isMine }">
-            <!-- 내 메시지(오른쪽) && 웜모드일 경우 원본 메시지 표시 -->
-            <div
-              v-if="message.isMine && message.input_content && !message.isOriginal && warmState.isWarmMode"
-              class="input-content"
-            >
-              {{ message.input_content }}
-            </div>
-            <div class="output-content">{{ message.text }}</div>
+            <template v-if="message.isMine">
+              <template v-if="message.input_content && message.input_content !== message.text">
+                <!-- 웜모드로 보낸 경우: 원본과 변환된 메시지를 모두 출력 -->
+                <div class="input-content">{{ message.input_content }}</div>
+                <div class="output-content">{{ message.text }}</div>
+              </template>
+              <template v-else>
+                <!-- 웜모드 외, 일반 메시지 출력 -->
+                <div class="output-content">{{ message.text }}</div>
+              </template>
+            </template>
+            <template v-else>
+              <div class="output-content">{{ message.text }}</div>
+            </template>
           </div>
         </div>
       </div>
@@ -92,8 +98,8 @@ watch(messages, (newMessages, oldMessages) => {
   // 초기 로드 시(oldMessages가 없거나 길이가 줄어들 경우 무시)
   if (!oldMessages || newMessages.length <= oldMessages.length) return;
   const lastMsg = newMessages[newMessages.length - 1];
-  // 좌측 메시지인 경우
-  if (!lastMsg.isMine) {
+  // 좌측 메시지인 경우 웜모드가 켜져있으면 웜모드 메시지 재생
+  if (!lastMsg.isMine && warmState.isWarmMode) {
     // 사용자 성별의 반대: "M"이면 "F", 그렇지 않으면 "M"
     const oppositeGender = messageState.userGender && messageState.userGender.toUpperCase() === 'M' ? 'F' : 'M';
     textToSpeech(lastMsg.text, oppositeGender)
