@@ -108,9 +108,11 @@ onMounted(() => {
   // 채팅방 시작 시 웜모드를 false로 초기화
   warmState.isWarmMode = false;
 
+  // 현재의 창으로 돌아올 때 메세지 로드
   loadMessages();
   window.addEventListener("focus", loadMessages);
-  // 채팅방에서만 웜모드 폴링 실행
+
+  // 채팅방에서만 웜모드 폴링 실행(3초마다 폴링)
   startWarmModePolling();
 });
 
@@ -169,7 +171,8 @@ const updateWarmMode = (newState) => {
 };
 </script>
 
-<style scoped>
+<style>
+/* 공통 스타일 */
 .app {
   display: flex;
   justify-content: center;
@@ -301,38 +304,37 @@ const updateWarmMode = (newState) => {
   color: #000;
 }
 
-/* -- Variants: female / male 채팅에 따라 오버라이드 -- */
-::v-deep(.female-chat) .chat-container {
+/* femaleChat 스타일 */
+.app.female-chat .chat-container {
   background-color: #F5F5F5;
-  }
-::v-deep(.female-chat) .chat-container.warm {
+}
+.app.female-chat .chat-container.warm {
   background-color: #ffe2e2;
 }
-::v-deep(.female-chat) {
+.app.female-chat {
   --mine-bubble-color: #ffebf0;
 }
-::v-deep(.female-chat) .option-btn {
-background: #d58080;
+.app.female-chat .option-btn {
+  background: #d58080;
 }
-::v-deep(.female-chat) .option-btn:hover {
+.app.female-chat .option-btn:hover {
   background: #ce5d5d;
 }
 
-
-::v-deep(.male-chat) .chat-container {
+/* maleChat 스타일 */
+.app.male-chat .chat-container {
   background-color: #F5F5F5;
 }
-::v-deep(.male-chat) .chat-container.warm {
+.app.male-chat .chat-container.warm {
   background-color: #e2f6ff;
 }
-::v-deep(.male-chat) {
-   --mine-bubble-color: #b1d6f8;
+.app.male-chat {
+  --mine-bubble-color: #b1d6f8;
 }
-::v-deep(.female-chat) .option-btn {
+.app.male-chat .option-btn {
   background: #6096d3;
 }
-::v-deep(.female-chat) .option-btn:hover {
+.app.male-chat .option-btn:hover {
   background: #3c7ec9;
 }
-
 </style> 

@@ -3,7 +3,7 @@
   <nav class="nav-bar">
     <div class="nav-top">
       <div class="logo">
-        <router-link to="/">{{ isChatView ? '🩵' : 'MyApp' }}</router-link>
+        <router-link to="/">{{ isChatView ? chatIcon : 'MyApp' }}</router-link>
       </div>
 
       <button class="hamburger" @click="toggleMenu">
@@ -26,15 +26,23 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { useMessages } from "../store/message";
-
-const { state } = useMessages();
 
 const menuVisible = ref(false);
 const router = useRouter();
 const route = useRoute();
+
 const isChatView = computed(() => {
-  return ['femaleChat', 'maleChat'].includes(route.name);
+  return ['/male-chat', '/female-chat'].includes(route.path);
+});
+
+const chatIcon = computed(() => {
+  if (route.path === '/male-chat') {
+    return '여보🩷';
+  } else if (route.path === '/female-chat') {
+    return '오빠🩵';
+  } else {
+    return 'MyApp';
+  }
 });
 
 const toggleMenu = () => {

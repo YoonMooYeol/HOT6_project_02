@@ -19,7 +19,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref } from "vue";
 import { useMessages } from "../store/message";
 import { toggleWarmMode, state as warmState } from "../store/warmMode";
 
@@ -28,31 +28,6 @@ const { messages, saveMessage, state: messageState } = useMessages();
 const newMessage = ref("");
 const isSending = ref(false);
 
-// 재귀적 setTimeout을 위한 타임아웃 ID
-let warmModeTimeoutId = null;
-
-// 웜모드 상태를 업데이트하는 함수
-const checkWarmMode = async () => {
-  try {
-    // store의 getWarmMode 함수를 사용해 내부 state 업데이트
-    await getWarmMode();
-    // 업데이트된 상태를 부모 컴포넌트에 알림
-    emit("updateWarmMode", warmState.isWarmMode);
-  } catch (error) {
-    console.error("Error checking warm mode:", error);
-  }
-};
-
-// 아래 사용하지 않는 글로벌 폴링 관련 주석은 제거합니다.
-// // 글로벌 폴링(App.vue에서 시작)로 대체합니다.
-// // onMounted(() => {
-// //   // 컴포넌트 마운트 시 즉시 체크하고 재귀적 폴링 시작
-// //   checkWarmMode();
-// // });
-// //
-// // onUnmounted(() => {
-// //   // 로컬 타이머 제거 코드는 필요하지 않습니다.
-// // });
 
 const handleSend = async () => {
   if (!newMessage.value.trim() || isSending.value) return;

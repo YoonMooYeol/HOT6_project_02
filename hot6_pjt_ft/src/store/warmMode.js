@@ -3,7 +3,7 @@ import { apiRequest } from './apiClient';
 
 // 웜모드 관련 API 엔드포인트
 const WARM_MODE_URL = 'http://127.0.0.1:8000/api/v1/chat/rooms/1/warm-mode/';
-const getWARM_MODE_URL = 'http://127.0.0.1:8000/api/v1/chat/rooms/1/warm-mode/';
+
 
 // 웜모드 상태 관리 객체 (반응형)
 const state = reactive({
@@ -15,7 +15,7 @@ const state = reactive({
 const getWarmMode = async () => {
   state.isLoading = true;
   try {
-    const response = await apiRequest(getWARM_MODE_URL, { method: 'GET' });
+    const response = await apiRequest(WARM_MODE_URL, { method: 'GET' });
     if (!response.ok) {
       throw new Error('GET warm mode 실패');
     }
