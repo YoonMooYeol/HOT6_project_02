@@ -16,8 +16,8 @@
       {{ isSending ? "..." : "➢" }}
     </button>
     <button class="speak-button" 
-      @click="speakMessage" 
-      :disabled="!newMessage">
+      @click="toggleTts" 
+      :class="{ active: warmState.ttsEnabled }">
       말하기
     </button>
   </div>
@@ -34,13 +34,8 @@ const { messages, saveMessage, state: messageState } = useMessages();
 const newMessage = ref("");
 const isSending = ref(false);
 
-const speakMessage = async () => {
-  if (!newMessage.value.trim()) return;
-  try {
-    await textToSpeech(newMessage.value, messageState.userGender);
-  } catch (error) {
-    console.error("말하기 실패", error);
-  }
+const toggleTts = () => {
+  warmState.ttsEnabled = !warmState.ttsEnabled;
 };
 
 const handleSend = async () => {
@@ -121,13 +116,19 @@ input {
   padding: 7px 9px;
   border-radius: 30px;
   border: none;
-  background-color: #d9ead3;
+  background-color: #ccc;
   color: rgb(0, 0, 0);
   cursor: pointer;
   font-size: 16px;
   transition: background-color 0.3s ease;
 }
+.speak-button.active {
+  background-color: #d9ead3;
+}
 .speak-button:hover {
+  background-color: #bbb;
+}
+.speak-button.active:hover {
   background-color: #b6d7a8;
 }
 input:disabled {

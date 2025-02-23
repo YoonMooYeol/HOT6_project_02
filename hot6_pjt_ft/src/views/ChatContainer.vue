@@ -99,7 +99,7 @@ watch(messages, (newMessages, oldMessages) => {
   if (!oldMessages || newMessages.length <= oldMessages.length) return;
   const lastMsg = newMessages[newMessages.length - 1];
   // 좌측 메시지인 경우 웜모드가 켜져있으면 웜모드 메시지 재생
-  if (!lastMsg.isMine && warmState.isWarmMode) {
+  if (!lastMsg.isMine && warmState.isWarmMode && warmState.ttsEnabled) {
     // 사용자 성별의 반대: "M"이면 "F", 그렇지 않으면 "M"
     const oppositeGender = messageState.userGender && messageState.userGender.toUpperCase() === 'M' ? 'F' : 'M';
     textToSpeech(lastMsg.text, oppositeGender)
@@ -183,7 +183,7 @@ const selectOption = async (option, index) => {
     );
     messageState.isPopupVisible = false;
     
-    if (warmState.isWarmMode) {
+    if (warmState.isWarmMode && warmState.ttsEnabled) {
       await textToSpeech(option, messageState.userGender);
     }
   } catch (error) {

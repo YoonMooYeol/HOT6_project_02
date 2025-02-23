@@ -4,11 +4,11 @@ import { apiRequest } from './apiClient';
 // 웜모드 관련 API 엔드포인트
 const WARM_MODE_URL = 'http://127.0.0.1:8000/api/v1/chat/rooms/1/warm-mode/';
 
-
-// 웜모드 상태 관리 객체 (반응형)
-const state = reactive({
+export const state = reactive({
   isWarmMode: false,
   isLoading: false,
+  // 말하기(TTS) 기능 활성화 여부 (true: 활성화, false: 비활성화)
+  ttsEnabled: false
 });
 
 // 웜모드 상태를 가져오는 함수
@@ -78,4 +78,4 @@ const stopWarmModePolling = () => {
   }
 };
 
-export { state, getWarmMode, toggleWarmMode, startWarmModePolling, stopWarmModePolling }; 
+export { getWarmMode, toggleWarmMode, startWarmModePolling, stopWarmModePolling }; 
