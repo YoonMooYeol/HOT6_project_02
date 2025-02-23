@@ -6,7 +6,7 @@ import LogIn from '../views/LogIn.vue'
 import SignUp from '../views/SignUp.vue'
 import AllUser from '../views/AllUser.vue'
 import DetailUser from '../views/DetailUser.vue'
-import Audio from '../views/Audio.vue'
+
 const routes = [
   {
     path: '/',
