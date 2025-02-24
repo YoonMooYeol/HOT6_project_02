@@ -148,6 +148,8 @@ onMounted(() => {
   loadMessages();
   window.addEventListener("focus", loadMessages);
 
+  // 메세지를 0.1초(100ms)마다 가져오도록 polling 타이머 추가
+  const messageInterval = setInterval(loadMessages, 100);
   // 채팅방에서만 웜모드 폴링 실행(3초마다 폴링)
   startWarmModePolling();
 
@@ -161,6 +163,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener("focus", loadMessages);
+  // 메세지 polling 타이머 해제
+  clearInterval(messageInterval);
   // 폴링 중지
   stopWarmModePolling();
 });
@@ -169,9 +173,10 @@ onUnmounted(() => {
  * @function showOptions
  * @description 옵션 팝업을 띄우고, 선택 가능한 옵션들을 설정합니다.
  */
-const showOptions = (newOptions, messageId) => {
+const showOptions = (newOptions, messageId, inputContent) => {
   options.value = newOptions;
   messageState.currentMessageId = messageId;
+  messageState.currentInputContent = inputContent;
   messageState.isPopupVisible = true;
 };
 
@@ -184,7 +189,6 @@ const selectOption = async (option, index) => {
   try {
     console.log("선택된 옵션:", option);
     console.log("선택된 인덱스:", index);
-    console.log("메시지 ID:", messageState.currentMessageId);
     console.log("현재 사용자 ID:", messageState.currentUserId);
     const token =
       localStorage.getItem("access_token") || sessionStorage.getItem("access_token");
@@ -192,26 +196,30 @@ const selectOption = async (option, index) => {
       throw new Error("인증이 필요합니다.");
     }
     const response = await fetch(
-      `http://127.0.0.1:8000/api/v1/chat/select-translation/${messageState.currentMessageId}/`,
+      `http://127.0.0.1:8000/api/v1/chat/select-translation/`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ selected_index: index })
+        body: JSON.stringify({ selected_index: index, input_content: messageState.currentInputContent, warm_options: options.value })
       }
     );
+    console.log("selected_index:", index);
+    console.log("input_content:", messageState.currentInputContent);
+    console.log("warm_options:", options.value);
     if (!response.ok) {
       throw new Error("API 호출 실패");
     }
     const responseData = await response.json();
-    console.log("서버 응답:", responseData);
     messages.value = messages.value.map((msg) =>
       msg.id === responseData.id
         ? { ...msg, text: responseData.output_content, isOriginal: false }
         : msg
     );
+    // 옵션 선택 후 채팅창이 바로 최하단으로 스크롤되도록 호출
+    scrollToBottom();
     // 옵션 선택 확정 시 팝업을 닫고 FootBar의 입력창 초기화 처리
     messageState.isPopupVisible = false;
     if (footBarRef.value && typeof footBarRef.value.clearMessage === "function") {

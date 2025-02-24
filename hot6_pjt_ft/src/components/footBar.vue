@@ -19,7 +19,7 @@
     <button class="speak-button" 
       @click="toggleTts"  
       :class="{ active: warmState.ttsEnabled }">
-      말하기
+      <svg-icon :type="'mdi'" :path="mdiVolumeHigh" />
     </button>
   </div>
 </template>
@@ -28,6 +28,8 @@
 import { ref, nextTick } from "vue";
 import { useMessages } from "../store/message";
 import { toggleWarmMode, state as warmState } from "../store/warmMode";
+import SvgIcon from '@jamescoyle/vue-icon';
+import { mdiVolumeHigh } from '@mdi/js';
 
 const emit = defineEmits(["updateWarmMode", "showOptions"]);
 const { messages, saveMessage, state: messageState } = useMessages();
@@ -62,43 +64,70 @@ const handleSend = async () => {
 
   const textToSend = newMessage.value.trim();
   isSending.value = true;
-  try {
-    const data = await saveMessage(textToSend);
-
-    messages.value.push({
-      text: data.input_content,
-      input_content: data.input_content,
-      isMine: parseInt(data.user) === messageState.currentUserId,
+  
+  if (!warmState.isWarmMode) {
+    // 낙관적 업데이트: 임시 메시지 추가. 즉시 messages 배열에 푸시됨
+    const tempId = Date.now();
+    const optimisticMsg = {
+      text: textToSend,
+      input_content: textToSend,
+      isMine: true,
       isOriginal: true,
-      createdAt: new Date(data.created_at),
-      id: data.id,
-      user: data.user,
-    });
+      createdAt: new Date(),
+      id: tempId,
+      user: messageState.currentUserId,
+    };
+    messages.value.push(optimisticMsg);
 
-    if (warmState.isWarmMode) {
-      if (data.translated_content && Array.isArray(data.translated_content)) {
-        if (data.translated_content.length > 0) {
-          // 번역 옵션이 있을 경우: 부모(ChatContainer)에 이벤트 전달 →
-          // 옵션 취소 시 입력값은 그대로, 선택 시 부모에서 clearMessage 호출
-          emit("showOptions", data.translated_content, data.id, textToSend);
-        } else {
-          // 옵션 선택 확정 시(번역 옵션 배열이 비어있는 경우) 바로 입력창 초기화
-          newMessage.value = "";
-        }
-      } else {
-        emit("showOptions", data.translated_content, data.id, textToSend);
-      }
-    } else {
+    try {
+      const data = await saveMessage(textToSend);
+      // 서버 응답을 받은 후, 임시 메시지를 실제 메시지 데이터로 대체
+      messages.value = messages.value.map((msg) =>
+        msg.id === tempId
+          ? {
+              text: data.input_content,
+              input_content: data.input_content,
+              isMine: parseInt(data.user) === messageState.currentUserId,
+              isOriginal: true,
+              createdAt: new Date(data.created_at),
+              id: data.id,
+              user: data.user,
+            }
+          : msg
+      );
+    } catch (error) {
+      console.error("Error sending message:", error);
+      // 전송 실패 시 임시 메시지 제거
+      messages.value = messages.value.filter((msg) => msg.id !== tempId);
+    } finally {
+      isSending.value = false;
       newMessage.value = "";
     }
-  } catch (error) {
-    console.error("Error sending message:", error);
-  } finally {
-    isSending.value = false;
-    // 메시지 전송 후 입력창에 자동으로 포커스 설정
-    nextTick(() => {
-      focusInput();
-    });
+  }
+
+  if (warmState.isWarmMode) {
+    let shouldClearInput = false;
+    try {
+      const data = await saveMessage(textToSend);
+      console.log("data:", data);
+      if (data.options && Array.isArray(data.options)) {
+        if (data.options.length > 0) {
+          // 옵션이 존재하면 옵션팝업을 띄우고 입력값은 유지함
+          emit("showOptions", data.options, data.id, textToSend);
+        } else {
+          shouldClearInput = true;
+        }
+      } else {
+        emit("showOptions", data.options, data.id, textToSend);
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+    } finally {
+      isSending.value = false;
+      if (shouldClearInput) {
+        newMessage.value = "";
+      }
+    }
   }
 };
 

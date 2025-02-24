@@ -20,7 +20,6 @@ const getWarmMode = async () => {
       throw new Error('GET warm mode 실패');
     }
     const data = await response.json();
-    console.log('Warm mode data:', data);
     state.isWarmMode = data.warm_mode;
     return state.isWarmMode;
   } catch (error) {
@@ -65,7 +64,7 @@ const startWarmModePolling = () => {
     } catch (error) {
       console.error("Warm mode polling error:", error);
     } finally {
-      warmModeTimer = setTimeout(poll, 3000);
+      warmModeTimer = setTimeout(poll, 100);
     }
   };
   poll();
