@@ -5,7 +5,7 @@
       {{ warmState.isWarmMode ? "♥︎" : "♡" }}
     </button>
     <input
-      ref="inputRef" 
+      ref="chatInput" 
       v-model="newMessage" 
       @keyup.enter="handleSend"
       placeholder="메시지 입력" 
@@ -25,25 +25,37 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, nextTick } from "vue";
 import { useMessages } from "../store/message";
 import { toggleWarmMode, state as warmState } from "../store/warmMode";
 
-const emit = defineEmits(["updateWarmMode", "showOptions", "refreshOptions"]);
+const emit = defineEmits(["updateWarmMode", "showOptions"]);
 const { messages, saveMessage, state: messageState } = useMessages();
 const newMessage = ref("");
 const isSending = ref(false);
-const inputRef = ref(null); // 입력창 참조
 
+// 입력창에 포커스를 주기 위한 ref
+const chatInput = ref(null);
 
 const toggleTts = () => {
   warmState.ttsEnabled = !warmState.ttsEnabled;
 };
 
 /**
+ * @function focusInput
+ * @description 채팅 입력창에 포커스를 설정합니다.
+ */
+const focusInput = () => {
+  if (chatInput.value) {
+    chatInput.value.focus();
+  }
+};
+
+/**
  * @function handleSend
  * @description 메시지 전송 시, 웜모드이고 옵션(번역)이 필요한 경우에는 아래와 같이 처리하여
- * 옵션 취소 시 입력창의 내용을 유지하고, 옵션 선택 확정 시는 부모에서 clearMessage() 호출을 통해 입력창을 초기화합니다.
+ * 옵션 취소 시 입력창 내용을 유지하고, 옵션 선택 확정 시 부모에서 clearMessage() 호출을 통해
+ * 입력창을 초기화합니다.
  */
 const handleSend = async () => {
   if (!newMessage.value.trim() || isSending.value) return;
@@ -66,7 +78,7 @@ const handleSend = async () => {
     if (warmState.isWarmMode) {
       if (data.translated_content && Array.isArray(data.translated_content)) {
         if (data.translated_content.length > 0) {
-          // 번역 옵션이 있을 경우: 부모(ChatContainer)에 이벤트 전달 → 
+          // 번역 옵션이 있을 경우: 부모(ChatContainer)에 이벤트 전달 →
           // 옵션 취소 시 입력값은 그대로, 선택 시 부모에서 clearMessage 호출
           emit("showOptions", data.translated_content, data.id, textToSend);
         } else {
@@ -79,11 +91,14 @@ const handleSend = async () => {
     } else {
       newMessage.value = "";
     }
-
   } catch (error) {
     console.error("Error sending message:", error);
   } finally {
     isSending.value = false;
+    // 메시지 전송 후 입력창에 자동으로 포커스 설정
+    nextTick(() => {
+      focusInput();
+    });
   }
 };
 
@@ -92,7 +107,7 @@ const clearMessage = () => {
   newMessage.value = "";
 };
 
-defineExpose({ clearMessage });
+defineExpose({ clearMessage, focusInput });
 </script>
 
 <style scoped>

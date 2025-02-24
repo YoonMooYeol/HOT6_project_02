@@ -96,6 +96,9 @@ const handleSignup = async () => {
       alert('모든 필드를 입력해주세요.');
       return;
     }
+    
+
+
 
     // 비밀번호 확인 체크
     if (formData.value.password !== formData.value.password2) {
@@ -108,7 +111,15 @@ const handleSignup = async () => {
       alert('비밀번호는 8자 이상이어야 합니다.');
       return;
     }
-
+    if (formData.value.password.length > 20) {
+      alert('비밀번호는 20자 이하여야 합니다.');
+      return;
+    }
+    //이름에 숫자가 포함되어 있는지 체크
+    if (/\d/.test(formData.value.name)) {
+      alert('이름에 숫자가 포함되어 있습니다.');
+      return;
+    }
     // API 요청 데이터 준비
     const requestData = {
       username: formData.value.username.trim(),  // 공백 제거

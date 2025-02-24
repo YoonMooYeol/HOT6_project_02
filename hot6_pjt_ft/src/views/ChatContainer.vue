@@ -108,6 +108,7 @@ watch(messages, (newMessages, oldMessages) => {
   // 초기 로드 시(oldMessages가 없거나 길이가 줄어들 경우 무시)
   if (!oldMessages || newMessages.length <= oldMessages.length) return;
   const lastMsg = newMessages[newMessages.length - 1];
+  console.log(messages.value[messages.value.length - 1]);
   // 좌측 메시지인 경우 웜모드가 켜져있으면 웜모드 메시지 재생
   if (!lastMsg.isMine && warmState.isWarmMode && warmState.ttsEnabled) {
     // 사용자 성별의 반대: "M"이면 "F", 그렇지 않으면 "M"
@@ -149,6 +150,13 @@ onMounted(() => {
 
   // 채팅방에서만 웜모드 폴링 실행(3초마다 폴링)
   startWarmModePolling();
+
+  // 채팅방 진입 시 FootBar의 입력창에 커서를 자동으로 설정
+  nextTick(() => {
+    if (footBarRef.value && typeof footBarRef.value.focusInput === "function") {
+      footBarRef.value.focusInput();
+    }
+  });
 });
 
 onUnmounted(() => {
@@ -209,6 +217,12 @@ const selectOption = async (option, index) => {
     if (footBarRef.value && typeof footBarRef.value.clearMessage === "function") {
       footBarRef.value.clearMessage();
     }
+    // 옵션 처리 후에도 채팅 입력란에 커서 두기
+    nextTick(() => {
+      if (footBarRef.value && typeof footBarRef.value.focusInput === "function") {
+        footBarRef.value.focusInput();
+      }
+    });
     if (warmState.isWarmMode && warmState.ttsEnabled) {
       await textToSpeech(option, messageState.userGender);
     }
