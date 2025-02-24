@@ -96,16 +96,16 @@ const handleSignup = async () => {
       alert('모든 필드를 입력해주세요.');
       return;
     }
-    
-
-
-
-    // 비밀번호 확인 체크
-    if (formData.value.password !== formData.value.password2) {
-      alert('비밀번호가 일치하지 않습니다.');
+    //비밀번호가 숫자로만 이루어졌을 경우
+    if (/^\d+$/.test(formData.value.password)) {
+      alert('비밀번호는 숫자로만 이루어질 수 없습니다.');
       return;
     }
-
+    //비밀번호에 특수문자가 없을 경우
+    if (!/[!@#$%^&*]/.test(formData.value.password)) {
+      alert('비밀번호에 특수문자가 없습니다.');
+      return;
+    }
     // 비밀번호 유효성 검사 추가
     if (formData.value.password.length < 8) {
       alert('비밀번호는 8자 이상이어야 합니다.');
@@ -113,6 +113,11 @@ const handleSignup = async () => {
     }
     if (formData.value.password.length > 20) {
       alert('비밀번호는 20자 이하여야 합니다.');
+      return;
+    }
+    // 비밀번호 확인 체크
+    if (formData.value.password !== formData.value.password2) {
+      alert('비밀번호가 일치하지 않습니다.');
       return;
     }
     //이름에 숫자가 포함되어 있는지 체크

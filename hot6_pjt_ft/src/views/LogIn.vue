@@ -4,7 +4,7 @@
       <h2>로그인</h2>
       
       <div class="form-group">
-        <label for="username">아이디</label>
+        <label for="username" required>아이디</label>
         <input 
           type="text" 
           id="username" 
@@ -15,7 +15,7 @@
       </div>
 
       <div class="form-group">
-        <label for="password">비밀번호</label>
+        <label for="password" required>비밀번호</label>
         <input 
           type="password" 
           id="password" 
@@ -57,6 +57,9 @@ const formData = ref({
 });
 
 const handleLogin = async () => {
+
+  
+
   try {
     const response = await fetch('http://127.0.0.1:8000/api/auth/token/', {
       method: 'POST',
