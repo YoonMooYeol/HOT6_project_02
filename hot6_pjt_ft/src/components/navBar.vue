@@ -13,8 +13,6 @@
     <div class="menu" v-if="menuVisible">
       <ul>
         <li><router-link to="/">메인</router-link></li>
-        <li><router-link to="/female-chat">여자 채팅</router-link></li>
-        <li><router-link to="/male-chat">남자 채팅</router-link></li>
         <li><router-link to="/all-user">모든 사용자</router-link></li>
         <li><router-link to="/detail-user">내 정보</router-link></li>
         <li><a href="#" @click.prevent="logout">로그아웃</a></li>

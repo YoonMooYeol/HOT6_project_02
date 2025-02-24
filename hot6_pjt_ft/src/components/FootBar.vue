@@ -4,7 +4,8 @@
       @click="toggleWarmMode">
       {{ warmState.isWarmMode ? "♥︎" : "♡" }}
     </button>
-    <input 
+    <input
+      ref="inputRef" 
       v-model="newMessage" 
       @keyup.enter="handleSend"
       placeholder="메시지 입력" 
@@ -16,7 +17,7 @@
       {{ isSending ? "..." : "➢" }}
     </button>
     <button class="speak-button" 
-      @click="toggleTts" 
+      @click="toggleTts"  
       :class="{ active: warmState.ttsEnabled }">
       말하기
     </button>
@@ -28,10 +29,12 @@ import { ref } from "vue";
 import { useMessages } from "../store/message";
 import { toggleWarmMode, state as warmState } from "../store/warmMode";
 
-const emit = defineEmits(["updateWarmMode", "showOptions"]);
+const emit = defineEmits(["updateWarmMode", "showOptions", "refreshOptions"]);
 const { messages, saveMessage, state: messageState } = useMessages();
 const newMessage = ref("");
 const isSending = ref(false);
+const inputRef = ref(null); // 입력창 참조
+
 
 const toggleTts = () => {
   warmState.ttsEnabled = !warmState.ttsEnabled;
@@ -76,6 +79,7 @@ const handleSend = async () => {
     } else {
       newMessage.value = "";
     }
+
   } catch (error) {
     console.error("Error sending message:", error);
   } finally {
