@@ -84,8 +84,6 @@ export const useMessages = () => {
 
       const data2 = await response2.json();
       const data3 = await response3.json();
-      console.log(data2);
-      console.log(data3);
       // 두 사용자의 메시지를 합치기
       const allMessages = [...data2, ...data3];
       const userGender = state.userGender;

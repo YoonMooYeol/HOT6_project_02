@@ -108,7 +108,6 @@ watch(messages, (newMessages, oldMessages) => {
   // 초기 로드 시(oldMessages가 없거나 길이가 줄어들 경우 무시)
   if (!oldMessages || newMessages.length <= oldMessages.length) return;
   const lastMsg = newMessages[newMessages.length - 1];
-  console.log(messages.value[messages.value.length - 1]);
   // 좌측 메시지인 경우 웜모드가 켜져있으면 웜모드 메시지 재생
   if (!lastMsg.isMine && warmState.isWarmMode && warmState.ttsEnabled) {
     // 사용자 성별의 반대: "M"이면 "F", 그렇지 않으면 "M"

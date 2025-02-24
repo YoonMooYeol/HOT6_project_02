@@ -1,24 +1,31 @@
 <template>
   <div class="foot-bar">
-    <button class="heart-button" 
-      @click="toggleWarmMode">
+    <button class="heart-button" @click="toggleWarmMode">
       {{ warmState.isWarmMode ? "♥︎" : "♡" }}
     </button>
-    <input
-      ref="chatInput" 
-      v-model="newMessage" 
-      @keyup.enter="handleSend"
-      placeholder="메시지 입력" 
-      :disabled="isSending || messageState.isPopupVisible"
-    />
-    <button class="send-button" 
-      @click="handleSend"
-      :disabled="isSending || messageState.isPopupVisible">
+    <div class="input-wrapper">
+      <input
+        ref="chatInput"
+        v-model="newMessage"
+        @keyup.enter="handleSend"
+        placeholder="메시지 입력"
+        :disabled="isSending || messageState.isPopupVisible"
+      />
+      <div class="translate-toggle">
+        <button type="button" class="dropup-button" @click="toggleTranslateOptions">▲</button>
+        <div v-if="translateOptionsVisible" class="dropup-menu" >
+          <ul>
+            <li @click="selectLanguage('en')">English</li>
+            <li @click="selectLanguage('ko')">한국어</li>
+            <li @click="selectLanguage('ja')">日本語</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <button class="send-button" @click="handleSend" :disabled="isSending || messageState.isPopupVisible">
       {{ isSending ? "..." : "➢" }}
     </button>
-    <button class="speak-button" 
-      @click="toggleTts"  
-      :class="{ active: warmState.ttsEnabled }">
+    <button class="speak-button" @click="toggleTts" :class="{ active: warmState.ttsEnabled }">
       <svg-icon :type="'mdi'" :path="mdiVolumeHigh" />
     </button>
   </div>
@@ -55,9 +62,7 @@ const focusInput = () => {
 
 /**
  * @function handleSend
- * @description 메시지 전송 시, 웜모드이고 옵션(번역)이 필요한 경우에는 아래와 같이 처리하여
- * 옵션 취소 시 입력창 내용을 유지하고, 옵션 선택 확정 시 부모에서 clearMessage() 호출을 통해
- * 입력창을 초기화합니다.
+ * @description 메시지 전송 시, 웜모드 관련 처리 및 메시지 전송을 처리합니다.
  */
 const handleSend = async () => {
   if (!newMessage.value.trim() || isSending.value) return;
@@ -136,6 +141,55 @@ const clearMessage = () => {
   newMessage.value = "";
 };
 
+// ===== 번역 기능 추가 =====
+const translateOptionsVisible = ref(false);
+const selectedLanguage = ref("en");
+
+const toggleTranslateOptions = () => {
+  translateOptionsVisible.value = !translateOptionsVisible.value;
+};
+
+const selectLanguage = (lang) => {
+  selectedLanguage.value = lang;
+  translateOptionsVisible.value = false;
+  handleTranslate();
+};
+
+const handleTranslate = async () => {
+  if (!newMessage.value.trim()) return;
+  try {
+    // 인증 토큰을 로컬스토리지 혹은 세션스토리지에서 가져옵니다.
+    const token = localStorage.getItem("access_token") || sessionStorage.getItem("access_token");
+    const response = await fetch("http://127.0.0.1:8000/api/v1/chat/translate-language/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": token ? `Bearer ${token}` : ""
+      },
+      body: JSON.stringify({
+        input_content: newMessage.value,
+        target_language: selectedLanguage.value
+      })
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Translation API error response:", errorText);
+      throw new Error("번역 API 호출 실패");
+    }
+  
+    console.log("input_content:", newMessage.value);
+    console.log("target_language:", selectedLanguage.value);
+    console.log("response:", response);
+    const data = await response.json();
+    if (data.translated_text) {
+      newMessage.value = data.translated_text;
+    }
+  } catch (error) {
+    console.error("Error translating message:", error);
+  }
+};
+// ============================
+
 defineExpose({ clearMessage, focusInput });
 </script>
 
@@ -204,5 +258,72 @@ input {
 input:disabled {
   background-color: #f5f5f5;
   cursor: not-allowed;
+}
+/* 번역 관련 UI 스타일 */
+.input-wrapper {
+  position: relative;
+  flex-grow: 1;
+  /* 인풋과 같은 높이에 맞추기 위해 block 요소로 처리 */
+}
+
+.input-wrapper input {
+  width: 100%;
+  padding-right: 80px; /* 번역 토글 영역을 위한 여백 */
+}
+
+.translate-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+}
+
+.translate-toggle .translate-button {
+  margin-right: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: none;
+  background-color: #e0e0e0;
+  color: #000;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.dropup-button {
+  padding: 4px;
+  border: none;
+  background-color: #e0e0e0;
+  cursor: pointer;
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+.dropup-menu {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0px -2px 5px rgba(0,0,0,0.2);
+  margin-bottom: 2px;
+  z-index: 100;
+}
+
+.dropup-menu ul {
+  list-style: none;
+  padding: 4px;
+  margin: 0;
+}
+
+.dropup-menu li {
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.dropup-menu li:hover {
+  background-color: #f0f0f0;
 }
 </style>
