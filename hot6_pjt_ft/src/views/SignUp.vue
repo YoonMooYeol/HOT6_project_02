@@ -109,6 +109,11 @@ const handleSignup = async () => {
       return;
     }
 
+    if (formData.value.password.length > 20) { 
+      alert('비밀번호는 20자 이하여야 합니다.');  
+      return;
+    }
+
     // API 요청 데이터 준비
     const requestData = {
       username: formData.value.username.trim(),  // 공백 제거
