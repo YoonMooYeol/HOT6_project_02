@@ -37,13 +37,21 @@ const toggleTts = () => {
   warmState.ttsEnabled = !warmState.ttsEnabled;
 };
 
+/**
+ * @function handleSend
+ * @description 메시지 전송 시, 웜모드이고 옵션(번역)이 필요한 경우 메시지를 전송한 후 입력창 초기화를 하지 않아
+ * 사용자가 옵션 취소 시 작성한 메시지를 그대로 재편집할 수 있도록 함.
+ */
 const handleSend = async () => {
   if (!newMessage.value.trim() || isSending.value) return;
-  
+
+  // 전송할 메시지를 미리 저장
+  const textToSend = newMessage.value.trim();
+
   isSending.value = true;
   try {
-    const data = await saveMessage(newMessage.value);
-    
+    const data = await saveMessage(textToSend);
+
     messages.value.push({
       text: data.input_content,
       input_content: data.input_content,
@@ -53,14 +61,16 @@ const handleSend = async () => {
       id: data.id,
       user: data.user,
     });
-    
-    // 번역 API 호출 후 옵션을 받으면 부모 컴포넌트에 이벤트 전달
-    if (data.translated_content && Array.isArray(data.translated_content)) {
-      emit("showOptions", data.translated_content, data.id);
+
+    // 웜모드이고 API 결과에 옵션(번역 내용)이 있는 경우 새로운 메시지로 바로 입력창을 비우지 않음
+    if (warmState.isWarmMode && data.translated_content && Array.isArray(data.translated_content)) {
+      // 원본 메시지를 함께 전달하여 부모에서 옵션 취소 시 필요시 재사용할 수 있도록 함.
+      emit("showOptions", data.translated_content, data.id, textToSend);
+      // 이 경우 newMessage.value를 초기화하지 않아 입력창에는 원본 메시지가 그대로 남게 됩니다.
+    } else {
+      // 웜모드가 아니라면 또는 옵션이 없는 경우엔 일반 동작대로 입력창을 초기화합니다.
+      newMessage.value = "";
     }
-    // 사용자가 취소하면 메세지를 보내지 않기
-    
-    newMessage.value = "";
   } catch (error) {
     console.error("Error sending message:", error);
   } finally {
