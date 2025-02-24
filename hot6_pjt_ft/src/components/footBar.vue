@@ -19,7 +19,7 @@
     <button class="speak-button" 
       @click="toggleTts"  
       :class="{ active: warmState.ttsEnabled }">
-      말하기
+      <svg-icon :type="'mdi'" :path="mdiVolumeHigh" />
     </button>
   </div>
 </template>
@@ -28,6 +28,8 @@
 import { ref } from "vue";
 import { useMessages } from "../store/message";
 import { toggleWarmMode, state as warmState } from "../store/warmMode";
+import SvgIcon from '@jamescoyle/vue-icon';
+import { mdiVolumeHigh } from '@mdi/js';
 
 const emit = defineEmits(["updateWarmMode", "showOptions", "refreshOptions"]);
 const { messages, saveMessage, state: messageState } = useMessages();

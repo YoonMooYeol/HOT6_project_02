@@ -19,7 +19,7 @@
           type="password" 
           id="password" 
           v-model="formData.password"
-          placeholder="비밀번호를 입력하세요(8-20자)"
+          placeholder="비밀번호를 입력하세요(문자, 숫자 포함 8-20자)"
         >
       </div>
 
@@ -106,6 +106,11 @@ const handleSignup = async () => {
     // 비밀번호 유효성 검사 추가
     if (formData.value.password.length < 8) {
       alert('비밀번호는 8자 이상이어야 합니다.');
+      return;
+    }
+
+    if (formData.value.password.length > 20) { 
+      alert('비밀번호는 20자 이하여야 합니다.');  
       return;
     }
 
