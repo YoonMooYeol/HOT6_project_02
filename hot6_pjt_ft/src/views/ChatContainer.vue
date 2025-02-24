@@ -31,7 +31,10 @@
       <div v-if="messageState.isPopupVisible" class="popup">
         <div class="popup-content">
           <button class="close-btn" @click="messageState.isPopupVisible = false">×</button>
-          <button class="refresh-btn" @click="refreshOptions">↺</button>
+          <button class="refresh-btn" @click="refreshOptions" :disabled="refreshLoading">
+            <span v-if="!refreshLoading">↺</span>
+            <span v-else>...</span>
+          </button>
           <div class="options">
             <button
               v-for="(option, idx) in options"
@@ -65,6 +68,7 @@ const { messages, getAllMessages, state: messageState, getCurrentUser } = useMes
 const chatContent = ref(null);
 const options = ref([]);
 const footBarRef = ref(null);
+const refreshLoading = ref(false);
 
 // 양쪽에서 동일하게 currentUserId로 내 메시지 여부를 설정합니다.
 const sortedMessages = computed(() => {
@@ -242,44 +246,40 @@ const selectOption = async (option, index) => {
  * @function refreshOptions
  * @description 옵션을 새로고침하여 새로운 옵션 후보들을 불러옵니다.
  */
- const refreshOptions = async () => {
+const refreshOptions = async () => {
   try {
-    console.log("옵션 새로고침 실행");
+    // 웜모드가 아닐 경우에는 옵션 새로고침을 실행하지 않음
+    if (!warmState.isWarmMode) return alert("웜모드가 아니면 옵션 새로고침을 할 수 없습니다.");
 
-    if (!messageState.currentMessageId) {
-      console.error("새로고침할 메시지가 선택되지 않았습니다.");
-      return;
-    }
+    refreshLoading.value = true;
 
-    const token =
-      localStorage.getItem("access_token") || sessionStorage.getItem("access_token");
+    const token = localStorage.getItem("access_token") || sessionStorage.getItem("access_token");
     if (!token) {
       throw new Error("인증이 필요합니다.");
     }
 
-    const response = await fetch(
-      `http://127.0.0.1:8000/api/v1/chat/refresh-translation/${messageState.currentMessageId}/`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        }
-      }
-    );
-
+    // messageState.currentInputContent를 전달하여 옵션 갱신
+    const response = await fetch("http://127.0.0.1:8000/api/v1/chat/json-drf/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ input_content: messageState.currentInputContent })
+    });
     if (!response.ok) {
-      const errorText = await response.text(); // 서버에서 반환한 에러 메시지 확인
-      throw new Error("옵션 새로고침 API 호출 실패");
+      const errorText = await response.text();
+      throw new Error("옵션 새로고침 API 호출 실패: " + errorText);
     }
 
-    const responseData = await response.json();
-    console.log("새로운 옵션:", responseData);
-
-    options.value = responseData.options || []; // 새로운 옵션 리스트 반영
+    const data = await response.json();
+    console.log("새로운 옵션:", data);
+    options.value = data.options || [];
   } catch (error) {
     console.error("옵션 새로고침 실패:", error);
-    alert("옵션을 새로고침하는 데 실패했습니다."); //사용자에게 알림
+    alert("옵션을 새로고침하는 데 실패했습니다.");
+  } finally {
+    refreshLoading.value = false;
   }
 };
 
