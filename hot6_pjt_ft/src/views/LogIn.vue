@@ -10,6 +10,7 @@
           id="username" 
           v-model="formData.username"
           placeholder="아이디를 입력하세요"
+          @keyup.enter="handleLogin"
         >
       </div>
 
@@ -20,6 +21,7 @@
           id="password" 
           v-model="formData.password"
           placeholder="비밀번호를 입력하세요"
+          @keyup.enter="handleLogin"
         >
       </div>
 
