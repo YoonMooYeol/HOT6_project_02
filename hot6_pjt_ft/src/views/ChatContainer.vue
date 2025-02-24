@@ -44,7 +44,7 @@
         </div>
       </div>
 
-      <FootBar @updateWarmMode="updateWarmMode" @showOptions="showOptions" />
+      <FootBar ref="footBarRef" @updateWarmMode="updateWarmMode" @showOptions="showOptions" />
     </div>
   </div>
 </template>
@@ -63,6 +63,7 @@ const { messages, getAllMessages, state: messageState, getCurrentUser } = useMes
 
 const chatContent = ref(null);
 const options = ref([]);
+const footBarRef = ref(null);
 
 // 양쪽에서 동일하게 currentUserId로 내 메시지 여부를 설정합니다.
 const sortedMessages = computed(() => {
@@ -167,7 +168,8 @@ const showOptions = (newOptions, messageId) => {
 
 /**
  * @function selectOption
- * @description 사용자가 선택한 옵션을 서버로 전송하고 응답을 반영합니다.
+ * @description 사용자가 옵션을 선택하면 서버로 전송한 후, 
+ * 옵션 선택 확정 시 FootBar의 입력창을 초기화합니다.
  */
 const selectOption = async (option, index) => {
   try {
@@ -201,8 +203,11 @@ const selectOption = async (option, index) => {
         ? { ...msg, text: responseData.output_content, isOriginal: false }
         : msg
     );
+    // 옵션 선택 확정 시 팝업을 닫고 FootBar의 입력창 초기화 처리
     messageState.isPopupVisible = false;
-
+    if (footBarRef.value && typeof footBarRef.value.clearMessage === "function") {
+      footBarRef.value.clearMessage();
+    }
     if (warmState.isWarmMode && warmState.ttsEnabled) {
       await textToSpeech(option, messageState.userGender);
     }

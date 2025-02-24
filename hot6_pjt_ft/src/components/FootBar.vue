@@ -39,15 +39,13 @@ const toggleTts = () => {
 
 /**
  * @function handleSend
- * @description 메시지 전송 시, 웜모드이고 옵션(번역)이 필요한 경우 메시지를 전송한 후 입력창 초기화를 하지 않아
- * 사용자가 옵션 취소 시 작성한 메시지를 그대로 재편집할 수 있도록 함.
+ * @description 메시지 전송 시, 웜모드이고 옵션(번역)이 필요한 경우에는 아래와 같이 처리하여
+ * 옵션 취소 시 입력창의 내용을 유지하고, 옵션 선택 확정 시는 부모에서 clearMessage() 호출을 통해 입력창을 초기화합니다.
  */
 const handleSend = async () => {
   if (!newMessage.value.trim() || isSending.value) return;
 
-  // 전송할 메시지를 미리 저장
   const textToSend = newMessage.value.trim();
-
   isSending.value = true;
   try {
     const data = await saveMessage(textToSend);
@@ -62,13 +60,20 @@ const handleSend = async () => {
       user: data.user,
     });
 
-    // 웜모드이고 API 결과에 옵션(번역 내용)이 있는 경우 새로운 메시지로 바로 입력창을 비우지 않음
-    if (warmState.isWarmMode && data.translated_content && Array.isArray(data.translated_content)) {
-      // 원본 메시지를 함께 전달하여 부모에서 옵션 취소 시 필요시 재사용할 수 있도록 함.
-      emit("showOptions", data.translated_content, data.id, textToSend);
-      // 이 경우 newMessage.value를 초기화하지 않아 입력창에는 원본 메시지가 그대로 남게 됩니다.
+    if (warmState.isWarmMode) {
+      if (data.translated_content && Array.isArray(data.translated_content)) {
+        if (data.translated_content.length > 0) {
+          // 번역 옵션이 있을 경우: 부모(ChatContainer)에 이벤트 전달 → 
+          // 옵션 취소 시 입력값은 그대로, 선택 시 부모에서 clearMessage 호출
+          emit("showOptions", data.translated_content, data.id, textToSend);
+        } else {
+          // 옵션 선택 확정 시(번역 옵션 배열이 비어있는 경우) 바로 입력창 초기화
+          newMessage.value = "";
+        }
+      } else {
+        emit("showOptions", data.translated_content, data.id, textToSend);
+      }
     } else {
-      // 웜모드가 아니라면 또는 옵션이 없는 경우엔 일반 동작대로 입력창을 초기화합니다.
       newMessage.value = "";
     }
   } catch (error) {
@@ -77,6 +82,13 @@ const handleSend = async () => {
     isSending.value = false;
   }
 };
+
+// 부모(ChatContainer)에서 옵션 선택 확정 시 호출할 수 있도록 clearMessage() 메서드를 노출합니다.
+const clearMessage = () => {
+  newMessage.value = "";
+};
+
+defineExpose({ clearMessage });
 </script>
 
 <style scoped>
