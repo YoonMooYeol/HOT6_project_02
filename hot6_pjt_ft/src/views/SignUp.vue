@@ -96,6 +96,31 @@ const handleSignup = async () => {
       alert('모든 필드를 입력해주세요.');
       return;
     }
+    //아이디가 숫자로만 이루어졌을 경우
+    if (/^\d+$/.test(formData.value.username)) {
+      alert('아이디는 숫자로만 이루어질 수 없습니다.');
+      return;
+    }
+    //아이디가 특수문자가 포함되어 있을 경우
+    if (/[!@#$%^&*]/.test(formData.value.username)) {
+      alert('아이디에 특수문자가 포함될 수 없습니다.');
+      return;
+    }
+    //아이디가 띄어쓰기가 포함되어 있을 경우
+    if (/\s/.test(formData.value.username)) {
+      alert('아이디에 띄어쓰기가 포함될 수 없습니다.');
+      return;
+    }
+    //아이디가 최소 4자 이상이 아닐 경우
+    if (formData.value.username.length < 4) {
+      alert('아이디는 최소 4자 이상이어야 합니다.');
+      return;
+    }
+    //아이디가 최대 16자 이상일 경우
+    if (formData.value.username.length > 16) {
+      alert('아이디는 최대 16자 이하여야 합니다.');
+      return;
+    }
     //비밀번호가 숫자로만 이루어졌을 경우
     if (/^\d+$/.test(formData.value.password)) {
       alert('비밀번호는 숫자로만 이루어질 수 없습니다.');
