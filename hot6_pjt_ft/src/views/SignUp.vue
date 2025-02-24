@@ -19,7 +19,7 @@
           type="password" 
           id="password" 
           v-model="formData.password"
-          placeholder="비밀번호를 입력하세요(문자, 숫자 포함 8-20자)"
+          placeholder="비밀번호(문자, 숫자, 특수문자 포함 8-20자)"
         >
       </div>
 
