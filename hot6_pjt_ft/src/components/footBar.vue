@@ -58,6 +58,7 @@ const handleSend = async () => {
     if (data.translated_content && Array.isArray(data.translated_content)) {
       emit("showOptions", data.translated_content, data.id);
     }
+    // 사용자가 취소하면 메세지를 보내지 않기
     
     newMessage.value = "";
   } catch (error) {
