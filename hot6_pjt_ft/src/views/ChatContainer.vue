@@ -184,21 +184,20 @@ const selectOption = async (option, index) => {
       throw new Error("인증이 필요합니다.");
     }
     const response = await fetch(
-      `http://127.0.0.1:8000/api/v1/chat/select-translation/${messageState.currentMessageId}/`,
+      `http://127.0.0.1:8000/api/v1/chat/select-translation/`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ selected_index: index })
+        body: JSON.stringify({ selected_index: index, input_content: messages.value[messages.value.length - 1].input_content, warm_options: options.value })
       }
     );
     if (!response.ok) {
       throw new Error("API 호출 실패");
     }
     const responseData = await response.json();
-    console.log("서버 응답:", responseData);
     messages.value = messages.value.map((msg) =>
       msg.id === responseData.id
         ? { ...msg, text: responseData.output_content, isOriginal: false }

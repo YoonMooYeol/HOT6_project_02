@@ -52,40 +52,50 @@ const handleSend = async () => {
 
   const textToSend = newMessage.value.trim();
   isSending.value = true;
-  try {
-    const data = await saveMessage(textToSend);
+  
+  if (!warmState.isWarmMode) {
+    try {
+      const data = await saveMessage(textToSend);
+    
+      messages.value.push({
+        text: data.input_content,
+        input_content: data.input_content,
+        isMine: parseInt(data.user) === messageState.currentUserId,
+        isOriginal: true,
+        createdAt: new Date(data.created_at),
+        id: data.id,
+        user: data.user,
+      });
+    } catch (error) {
+      console.error("Error sending message:", error);
+    } finally {
+      isSending.value = false;
+      newMessage.value = "";
+    }
+  }
 
-    messages.value.push({
-      text: data.input_content,
-      input_content: data.input_content,
-      isMine: parseInt(data.user) === messageState.currentUserId,
-      isOriginal: true,
-      createdAt: new Date(data.created_at),
-      id: data.id,
-      user: data.user,
-    });
-
-    if (warmState.isWarmMode) {
-      if (data.translated_content && Array.isArray(data.translated_content)) {
-        if (data.translated_content.length > 0) {
+  if (warmState.isWarmMode) {
+    try {
+      const data = await saveMessage(textToSend);
+      console.log("data:", data);
+      if (data.options && Array.isArray(data.options)) {
+        if (data.options.length > 0) {
           // 번역 옵션이 있을 경우: 부모(ChatContainer)에 이벤트 전달 → 
           // 옵션 취소 시 입력값은 그대로, 선택 시 부모에서 clearMessage 호출
-          emit("showOptions", data.translated_content, data.id, textToSend);
+          emit("showOptions", data.options, data.id, textToSend);
         } else {
           // 옵션 선택 확정 시(번역 옵션 배열이 비어있는 경우) 바로 입력창 초기화
           newMessage.value = "";
         }
       } else {
-        emit("showOptions", data.translated_content, data.id, textToSend);
+        emit("showOptions", data.options, data.id, textToSend);
       }
-    } else {
+    } catch (error) {
+      console.error("Error sending message:", error);
+    } finally {
+      isSending.value = false;
       newMessage.value = "";
     }
-
-  } catch (error) {
-    console.error("Error sending message:", error);
-  } finally {
-    isSending.value = false;
   }
 };
 
