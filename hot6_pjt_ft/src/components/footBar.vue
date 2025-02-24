@@ -54,20 +54,39 @@ const handleSend = async () => {
   isSending.value = true;
   
   if (!warmState.isWarmMode) {
+    // 낙관적 업데이트: 임시 메시지 추가. 즉시 messages 배열에 푸시됨
+    const tempId = Date.now();
+    const optimisticMsg = {
+      text: textToSend,
+      input_content: textToSend,
+      isMine: true,
+      isOriginal: true,
+      createdAt: new Date(),
+      id: tempId,
+      user: messageState.currentUserId,
+    };
+    messages.value.push(optimisticMsg);
+
     try {
       const data = await saveMessage(textToSend);
-    
-      messages.value.push({
-        text: data.input_content,
-        input_content: data.input_content,
-        isMine: parseInt(data.user) === messageState.currentUserId,
-        isOriginal: true,
-        createdAt: new Date(data.created_at),
-        id: data.id,
-        user: data.user,
-      });
+      // 서버 응답을 받은 후, 임시 메시지를 실제 메시지 데이터로 대체
+      messages.value = messages.value.map((msg) =>
+        msg.id === tempId
+          ? {
+              text: data.input_content,
+              input_content: data.input_content,
+              isMine: parseInt(data.user) === messageState.currentUserId,
+              isOriginal: true,
+              createdAt: new Date(data.created_at),
+              id: data.id,
+              user: data.user,
+            }
+          : msg
+      );
     } catch (error) {
       console.error("Error sending message:", error);
+      // 전송 실패 시 임시 메시지 제거
+      messages.value = messages.value.filter((msg) => msg.id !== tempId);
     } finally {
       isSending.value = false;
       newMessage.value = "";
@@ -75,17 +94,16 @@ const handleSend = async () => {
   }
 
   if (warmState.isWarmMode) {
+    let shouldClearInput = false;
     try {
       const data = await saveMessage(textToSend);
       console.log("data:", data);
       if (data.options && Array.isArray(data.options)) {
         if (data.options.length > 0) {
-          // 번역 옵션이 있을 경우: 부모(ChatContainer)에 이벤트 전달 → 
-          // 옵션 취소 시 입력값은 그대로, 선택 시 부모에서 clearMessage 호출
+          // 옵션이 존재하면 옵션팝업을 띄우고 입력값은 유지함
           emit("showOptions", data.options, data.id, textToSend);
         } else {
-          // 옵션 선택 확정 시(번역 옵션 배열이 비어있는 경우) 바로 입력창 초기화
-          newMessage.value = "";
+          shouldClearInput = true;
         }
       } else {
         emit("showOptions", data.options, data.id, textToSend);
@@ -94,7 +112,9 @@ const handleSend = async () => {
       console.error("Error sending message:", error);
     } finally {
       isSending.value = false;
-      newMessage.value = "";
+      if (shouldClearInput) {
+        newMessage.value = "";
+      }
     }
   }
 };
