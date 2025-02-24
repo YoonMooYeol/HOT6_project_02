@@ -101,6 +101,11 @@ const handleSignup = async () => {
       alert('비밀번호는 숫자로만 이루어질 수 없습니다.');
       return;
     }
+    //비밀번호에 숫자가 없을 경우
+    if (!/\d/.test(formData.value.password)) {
+      alert('비밀번호에 숫자가 없습니다.');
+      return;
+    }
     //비밀번호에 특수문자가 없을 경우
     if (!/[!@#$%^&*]/.test(formData.value.password)) {
       alert('비밀번호에 특수문자가 없습니다.');
