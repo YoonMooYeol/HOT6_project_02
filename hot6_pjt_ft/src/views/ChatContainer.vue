@@ -70,6 +70,9 @@ const options = ref([]);
 const footBarRef = ref(null);
 const refreshLoading = ref(false);
 
+// 타이머 변수는 컴포넌트 스코프에서 선언 (전역 변수처럼 사용)
+let messageInterval = null;
+
 // 양쪽에서 동일하게 currentUserId로 내 메시지 여부를 설정합니다.
 const sortedMessages = computed(() => {
   return [...messages.value]
@@ -151,9 +154,10 @@ onMounted(() => {
   loadMessages();
   window.addEventListener("focus", loadMessages);
 
-  // 메세지를 0.1초(100ms)마다 가져오도록 polling 타이머 추가
-  const messageInterval = setInterval(loadMessages, 500);
-  // 채팅방에서만 웜모드 폴링 실행(3초마다 폴링)
+  // 500ms마다 메시지 polling 시작
+  messageInterval = setInterval(loadMessages, 500);
+  
+  // 웜모드 폴링 시작 (필요할 경우)
   startWarmModePolling();
 
   // 채팅방 진입 시 FootBar의 입력창에 커서를 자동으로 설정
@@ -166,8 +170,10 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener("focus", loadMessages);
-  // 메세지 polling 타이머 해제
-  clearInterval(messageInterval);
+  // messageInterval이 정의된 경우에만 정리
+  if (messageInterval) {
+    clearInterval(messageInterval);
+  }
   // 폴링 중지
   stopWarmModePolling();
 });
