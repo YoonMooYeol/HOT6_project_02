@@ -364,15 +364,16 @@ const updateWarmMode = (newState) => {
 
 .popup {
   position: fixed;
-  top: 80px;
+  top: 200px;
   left: 50%;
   transform: translateX(-50%);
-  width: 380px;
+  width: 360px;
   background: white;
   padding: 15px;
   border-radius: 15px;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
   z-index: 1000;
+  align-items: center;
 }
 
 .popup-content {
@@ -403,6 +404,7 @@ const updateWarmMode = (newState) => {
 
 .refresh-btn:hover {
   background: #ff7a7a;
+  border-radius: 50%;
 }
 
 .options {
