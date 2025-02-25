@@ -152,7 +152,7 @@ onMounted(() => {
   window.addEventListener("focus", loadMessages);
 
   // 메세지를 0.1초(100ms)마다 가져오도록 polling 타이머 추가
-  const messageInterval = setInterval(loadMessages, 100);
+  const messageInterval = setInterval(loadMessages, 500);
   // 채팅방에서만 웜모드 폴링 실행(3초마다 폴링)
   startWarmModePolling();
 

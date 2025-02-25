@@ -64,7 +64,7 @@ const startWarmModePolling = () => {
     } catch (error) {
       console.error("Warm mode polling error:", error);
     } finally {
-      warmModeTimer = setTimeout(poll, 100);
+      warmModeTimer = setTimeout(poll, 500);
     }
   };
   poll();
