@@ -35,9 +35,9 @@ const isChatView = computed(() => {
 
 const chatIcon = computed(() => {
   if (route.path === '/male-chat') {
-    return '여보🩷';
+    return '여보❤︎';
   } else if (route.path === '/female-chat') {
-    return '오빠🩵';
+    return '오빠❤︎';
   } else {
     return 'MyApp';
   }
