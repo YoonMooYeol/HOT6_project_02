@@ -12,9 +12,7 @@
         :disabled="isSending || messageState.isPopupVisible"
       />
       <div class="translate-toggle">
-        <button type="button" class="dropup-button" @click="toggleTranslateOptions">
-          <svg-icon :type="'mdi'" :path="mdiVolumeHigh" />
-        </button>
+        <button type="button" class="dropup-button" @click="toggleTranslateOptions">▲</button>
         <div v-if="translateOptionsVisible" class="dropup-menu" >
           <ul>
             <li @click="selectLanguage('en')">English</li>
@@ -38,7 +36,7 @@ import { ref, nextTick } from "vue";
 import { useMessages } from "../store/message";
 import { toggleWarmMode, state as warmState } from "../store/warmMode";
 import SvgIcon from '@jamescoyle/vue-icon';
-import { mdiVolumeHigh, mdiTranslate} from '@mdi/js';
+import { mdiVolumeHigh } from '@mdi/js';
 
 const emit = defineEmits(["updateWarmMode", "showOptions"]);
 const { messages, saveMessage, state: messageState } = useMessages();
@@ -57,11 +55,9 @@ const toggleTts = () => {
  * @description 채팅 입력창에 포커스를 설정합니다.
  */
 const focusInput = () => {
-  nextTick(() => {
-    if (chatInput.value) {
-      chatInput.value.focus();
-    }
-  });
+  if (chatInput.value) {
+    chatInput.value.focus();
+  }
 };
 
 /**
@@ -111,7 +107,6 @@ const handleSend = async () => {
     } finally {
       isSending.value = false;
       newMessage.value = "";
-      focusInput();
     }
   }
 
@@ -137,7 +132,6 @@ const handleSend = async () => {
       if (shouldClearInput) {
         newMessage.value = "";
       }
-      focusInput();
     }
   }
 };
@@ -145,7 +139,6 @@ const handleSend = async () => {
 // 부모(ChatContainer)에서 옵션 선택 확정 시 호출할 수 있도록 clearMessage() 메서드를 노출합니다.
 const clearMessage = () => {
   newMessage.value = "";
-  focusInput();
 };
 
 // ===== 번역 기능 추가 =====

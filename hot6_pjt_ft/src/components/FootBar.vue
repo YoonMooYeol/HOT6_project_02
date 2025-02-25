@@ -55,11 +55,9 @@ const toggleTts = () => {
  * @description 채팅 입력창에 포커스를 설정합니다.
  */
 const focusInput = () => {
-  nextTick(() => {
-    if (chatInput.value) {
-      chatInput.value.focus();
-    }
-  });
+  if (chatInput.value) {
+    chatInput.value.focus();
+  }
 };
 
 /**
@@ -109,7 +107,6 @@ const handleSend = async () => {
     } finally {
       isSending.value = false;
       newMessage.value = "";
-      focusInput();
     }
   }
 
@@ -135,7 +132,6 @@ const handleSend = async () => {
       if (shouldClearInput) {
         newMessage.value = "";
       }
-      focusInput();
     }
   }
 };
@@ -143,7 +139,6 @@ const handleSend = async () => {
 // 부모(ChatContainer)에서 옵션 선택 확정 시 호출할 수 있도록 clearMessage() 메서드를 노출합니다.
 const clearMessage = () => {
   newMessage.value = "";
-  focusInput();
 };
 
 // ===== 번역 기능 추가 =====
