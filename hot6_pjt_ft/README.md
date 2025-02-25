@@ -1,5 +1,70 @@
-# Vue 3 + Vite
+# 화내지마 자기야 프론트엔드
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+이 프로젝트는 Vue.js 3를 사용하여 구축된 "화내지마 자기야" 메신저 애플리케이션의 프론트엔드 개발버전입니다.
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+## 프로젝트 설정
+
+1. 프로젝트를 클론합니다:
+   ```
+   git clone https://github.com/YoonMooYeol/HOT6_project_02.git
+   ```
+   
+2. 프로젝트 디렉토리로 이동합니다:
+   ```
+   cd hot6_pjt_ft
+   ```
+
+3. 필요한 패키지를 설치합니다:
+   ```
+   npm install
+   ```
+
+4. 개발 서버를 시작합니다:
+   ```
+   npm run dev
+   ```
+
+## 주요 기능
+
+- 실시간 채팅: 사용자는 실시간으로 메시지를 주고받을 수 있습니다.
+- 웜모드: 다정모드를 활성화하면 채팅 배경색이 변경되고, 상대방의 메시지가 다정하게 변경됩니다. 
+- 채팅내용도 음성으로 재생됩니다.
+- 사용자 인증: 사용자는 회원가입 및 로그인을 통해 인증할 수 있습니다.
+- 사용자 목록: 모든 사용자 목록을 확인할 수 있습니다.
+- 사용자 상세 정보: 사용자의 상세 정보를 확인할 수 있습니다.
+
+## 채택한 개발 기술과 브랜치 전략
+
+### Vue.js 3
+- Vue.js 3는 최신 버전의 Vue.js로, 컴포넌트 기반 아키텍처를 통해 효율적인 UI 관리 및 코드 재사용을 고려하였습니다.
+- 반응형 데이터 바인딩과 가상 DOM을 활용하여 빠른 렌더링 및 향상된 사용자 경험을 제공합니다.
+
+### Vue Router
+- Vue Router는 SPA 전용 라우터로, URL과 컴포넌트 간의 명확한 매핑을 지원합니다.
+- 동적 라우팅 및 네스트 라우터를 활용하여 복잡한 UI 흐름을 손쉽게 관리할 수 있습니다.
+
+### Vite
+- Vite는 최신 모듈 번들러로, 빠른 개발 서버 실행과 최적화된 빌드 시간을 자랑합니다.
+- 효율적인 핫 모듈 교체(HMR) 기능을 통해 개발 생산성을 극대화합니다.
+
+### tailwindcss
+- 최신 CSS 기법과 미디어 쿼리를 활용하여 다양한 디바이스에서 최적의 레이아웃을 유지합니다.
+
+### Pictogrammers
+- Pictogrammers 라이브러리는 다양한 아이콘 세트를 제공하여 UI의 시각적 완성도를 높입니다.
+- 일관된 아이콘 스타일을 통해 사용자 인터페이스의 직관성과 접근성을 개선합니다.
+
+## 브랜치 전략
+
+- Git workflow를 기반으로 다음과 같이 브랜치 전략을 설정하였습니다.
+    - **main**: 안정적인 배포를 위한 최종 브랜치입니다.
+    - **develop**: 모든 기능이 통합되고 테스트되는 개발 브랜치입니다.
+    - **feature**: 각 기능 개발을 위해 별도로 생성된 브랜치로, 기능 완료 후 `develop` 브랜치로 병합됩니다.
+
+## 기여
+
+이 프로젝트에 기여하고 싶다면 Pull Request를 보내주세요. 모든 기여는 환영합니다!
+
+## 라이선스
+
+이 프로젝트는 [MIT 라이선스](LICENSE)를 따릅니다.
