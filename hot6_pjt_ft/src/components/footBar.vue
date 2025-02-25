@@ -12,9 +12,7 @@
         :disabled="isSending || messageState.isPopupVisible"
       />
       <div class="translate-toggle">
-        <button type="button" class="dropup-button" @click="toggleTranslateOptions">
-          <svg-icon :type="'mdi'" :path="mdiVolumeHigh" />
-        </button>
+        <button type="button" class="dropup-button" @click="toggleTranslateOptions">▲</button>
         <div v-if="translateOptionsVisible" class="dropup-menu" >
           <ul>
             <li @click="selectLanguage('en')">English</li>
@@ -38,7 +36,7 @@ import { ref, nextTick } from "vue";
 import { useMessages } from "../store/message";
 import { toggleWarmMode, state as warmState } from "../store/warmMode";
 import SvgIcon from '@jamescoyle/vue-icon';
-import { mdiVolumeHigh, mdiTranslate} from '@mdi/js';
+import { mdiVolumeHigh } from '@mdi/js';
 
 const emit = defineEmits(["updateWarmMode", "showOptions"]);
 const { messages, saveMessage, state: messageState } = useMessages();
